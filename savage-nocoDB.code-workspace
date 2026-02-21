@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"remoteAuthority": "wsl+ubuntu-24.04",
+	"settings": {
+		"python.defaultInterpreterPath": "./.venv/bin/python",
+		"files.exclude": {
+			"**/__pycache__": true,
+			"**/.venv": true
+		}
+	}
+}
