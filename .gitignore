@@ -1,4 +1,14 @@
+# Datos sensibles - nunca subir
+.env
+
+# Entorno virtual Python
 .venv/
+venv/
 __pycache__/
 *.pyc
-.env
+
+# Outputs generados
+*.html
+*.pdf
+*.json
+!.env.example
