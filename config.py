@@ -61,8 +61,24 @@ TABLE_CONFIG = {
 
     "skill": {
         "table_id": "mr9wckj7cenfu9e",
-        "view_id": None,
+        "view_id": "vwoambz1ghunrsef",
         "fields": None,
+        "relations": []
+    },
+
+    "ancestry": {
+        "table_id": "m7idr6p4v8bnebf",
+        "view_id": None,
+        "fields": ["name", "name_original", "traits"],
+        "relations": []
+    },
+
+    # Fichas de personaje — el JSON completo va en el campo 'data'
+    # y la imagen como adjunto en el campo 'image'
+    "character": {
+        "table_id": "mxb6bj2wpwq1plw",
+        "view_id": None,
+        "fields": ["name", "data", "image"],
         "relations": []
     },
 

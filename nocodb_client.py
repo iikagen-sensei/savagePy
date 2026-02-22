@@ -94,6 +94,58 @@ def get_table(name: str, view_id: str | None = None) -> list[dict]:
     return records
 
 
+def get_characters(view_id: str | None = None) -> list[dict]:
+    """
+    Devuelve lista ligera de personajes: solo Id y name.
+    Útil para poblar selectores en la interfaz.
+    """
+    cfg = TABLE_CONFIG["character"]
+    effective_view_id = view_id or cfg.get("view_id")
+    params = {"limit": 100, "fields": "Id,name"}
+    if effective_view_id:
+        params["viewId"] = effective_view_id
+    url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records"
+    r = requests.get(url, headers=HEADERS, params=params)
+    r.raise_for_status()
+    return r.json().get("list", [])
+
+
+def get_character(record_id: int) -> dict:
+    """
+    Devuelve un personaje completo:
+      - 'character': dict con todos los datos (parseado desde el campo 'data')
+      - 'image_url': URL firmada de la imagen lista para usar en la plantilla
+    """
+    import json as _json
+    cfg = TABLE_CONFIG["character"]
+    url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records/{record_id}"
+    r = requests.get(url, headers=HEADERS)
+    r.raise_for_status()
+    record = r.json()
+
+    record = r.json()
+    print("RECORD KEYS:", record.keys())
+    print("DATA TYPE:", type(record.get("data")))
+    print("DATA VALUE:", str(record.get("data"))[:100])        
+
+    # Parsear el campo data (llega como string aunque sea tipo JSON en NocoDB)
+    raw_data = record.get("data") or "{}"
+    if isinstance(raw_data, str):
+        character = _json.loads(raw_data)
+    else:
+        character = raw_data
+
+    # Construir URL de imagen desde el adjunto
+    image_url = None
+    attachments = record.get("image") or []
+    if attachments:
+        signed_path = attachments[0].get("signedPath")
+        if signed_path:
+            image_url = f"{NOCODB_URL}/{signed_path}"
+
+    return {"character": character, "image_url": image_url}
+
+
 if __name__ == "__main__":
     import json
     import sys
