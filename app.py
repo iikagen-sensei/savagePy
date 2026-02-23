@@ -233,9 +233,17 @@ def download_characters_pdf():
 
 @app.route("/characters")
 def characters_list():
-    """Lista todos los personajes."""
+    """Lista todos los personajes obteniendo todos los datos necesarios para
+    la vista de gestión.
+
+    Anteriormente se usaba ``get_characters()`` en modo ligero, lo que
+    devolvía solo ``Id`` y ``name``; la plantilla esperaba también campos
+    como ``data`` y ``image_url`` y se producían errores (caracteres sin
+    imagen y rutas de edición con identificadores vacíos). Ahora solicitamos
+    los registros en el modo completo.
+    """
     try:
-        chars = get_characters()
+        chars = get_characters(full=True)
     except Exception as e:
         chars = []
     return render_template("ui/characters.html", characters=chars)

@@ -29,7 +29,7 @@ TABLE_CONFIG = {
 
     "power": {
         "table_id": "mx88eizkev8cy9i",
-        "view_id": "vwvuqnsaamif9dg9",   # Vista de NocoDB — cambia aquí el orden/filtro
+        "view_id": "vw4f52nynn9mora5",   # Vista de NocoDB — cambia aquí el orden/filtro
         "fields": [
             "name", "name_original", "rank_name", "cost",
             "range", "range_roh", "duration", "page_no",
@@ -47,14 +47,14 @@ TABLE_CONFIG = {
 
     "edge": {
         "table_id": "mxcix7utv40luu4",
-        "view_id": None,
+        "view_id": "vwg00ejk8z9pgny7",
         "fields": None,
         "relations": []
     },
 
     "hindrance": {
         "table_id": "makzrikm8hnw52b",
-        "view_id": None,
+        "view_id": "vwlib841q174mps1",
         "fields": None,
         "relations": []
     },
@@ -68,7 +68,7 @@ TABLE_CONFIG = {
 
     "ancestry": {
         "table_id": "m7idr6p4v8bnebf",
-        "view_id": None,
+        "view_id": "vwblot2ljkdf3938",
         "fields": ["name", "name_original", "traits"],
         "relations": []
     },

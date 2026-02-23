@@ -94,20 +94,61 @@ def get_table(name: str, view_id: str | None = None) -> list[dict]:
     return records
 
 
-def get_characters(view_id: str | None = None) -> list[dict]:
+def get_characters(view_id: str | None = None, full: bool = False) -> list[dict]:
     """
-    Devuelve lista ligera de personajes: solo Id y name.
-    Útil para poblar selectores en la interfaz.
+    Devuelve lista de personajes.
+
+    - Si ``full`` es False (valor por defecto) devuelve un "listado ligero" con
+      únicamente los campos ``Id`` y ``name``. Este modo se usa para rellenar
+      selectores en la interfaz y para operaciones que no necesitan el JSON
+      completo.
+
+    - Si ``full`` es True recupera todos los registros usando ``get_table`` y
+      transforma cada fila para:
+         * parsear el campo ``data`` (JSON que guarda toda la ficha)
+         * generar ``id`` en minúsculas (convirtiendo ``Id``) para facilitar el
+           acceso desde Jinja
+         * construir ``image_url`` a partir del adjunto si existe
     """
     cfg = TABLE_CONFIG["character"]
     effective_view_id = view_id or cfg.get("view_id")
-    params = {"limit": 100, "fields": "Id,name"}
-    if effective_view_id:
-        params["viewId"] = effective_view_id
-    url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records"
-    r = requests.get(url, headers=HEADERS, params=params)
-    r.raise_for_status()
-    return r.json().get("list", [])
+
+    if not full:
+        params = {"limit": 100, "fields": "Id,name"}
+        if effective_view_id:
+            params["viewId"] = effective_view_id
+        url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records"
+        r = requests.get(url, headers=HEADERS, params=params)
+        r.raise_for_status()
+        return r.json().get("list", [])
+
+    # modo completo: devolvemos registros enriquecidos
+    # usar get_table permite aprovechar el comportamiento de relaciones, etc.
+    import json as _json
+
+    records = get_table("character", view_id)
+    result: list[dict] = []
+    for rec in records:
+        raw_data = rec.get("data") or "{}"
+        if isinstance(raw_data, str):
+            character = _json.loads(raw_data)
+        else:
+            character = raw_data
+
+        image_url = None
+        attachments = rec.get("image") or []
+        if attachments:
+            signed_path = attachments[0].get("signedPath")
+            if signed_path:
+                image_url = f"{NOCODB_URL}/{signed_path}"
+
+        result.append({
+            "id": rec.get("Id"),
+            "name": rec.get("name"),
+            "data": character,
+            "image_url": image_url,
+        })
+    return result
 
 
 def get_character(record_id: int) -> dict:
