@@ -28,7 +28,7 @@ DOCUMENTS = {
         "docs": {
             "powers": {"label": "Manual de Poderes", "icon": "📖", "template": "powers_manual.html", "data_key": "powers"},
             "cards":        {"label": "Cartas de Poderes",        "icon": "🂠", "template": "power_cards.html",        "data_key": "powers"},
-            "cards_mobile": {"label": "Cartas Móvil (PDF)",         "icon": "📱", "template": "power_cards_mobile.html", "data_key": "powers"},
+            "cards_mobile": {"label": "Cartas Móvil",         "icon": "📱", "template": "power_cards_mobile.html", "data_key": "powers"},
         }
     },
     "edge": {
