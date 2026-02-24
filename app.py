@@ -5,6 +5,8 @@
 from flask import Flask, render_template, jsonify, send_file, Response, request, redirect, url_for
 from pathlib import Path
 import io
+import subprocess
+import tempfile
 import json
 import requests as req
 from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG
@@ -61,6 +63,25 @@ DOCUMENTS = {
 }
 
 
+def _resolve_view_name(table_key: str, view_id: str | None) -> str:
+    """Devuelve el título legible de una vista dado su ID, o cadena vacía."""
+    if not view_id:
+        return ""
+    try:
+        table_id = TABLE_CONFIG[table_key]["table_id"]
+        headers = {"xc-token": API_TOKEN}
+        url = f"{NOCODB_URL}/api/v2/meta/tables/{table_id}/views"
+        r = req.get(url, headers=headers, timeout=5)
+        r.raise_for_status()
+        PREFIX = "pub:"
+        for v in r.json().get("list", []):
+            if v["id"] == view_id:
+                return v["title"].removeprefix(PREFIX).strip()
+    except Exception:
+        pass
+    return ""
+
+
 def render_document(doc_id: str, view_id: str | None = None) -> str:
     """Renderiza un documento y devuelve el HTML como string."""
     # Buscar el documento en cualquier tabla
@@ -80,16 +101,23 @@ def render_document(doc_id: str, view_id: str | None = None) -> str:
     else:
         data = get_table(table_key, view_id=view_id)
 
+    view_name = _resolve_view_name(table_key, view_id)
+
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
     template = env.get_template(doc["template"])
-    return template.render(**{doc["data_key"]: data})
+    return template.render(**{doc["data_key"]: data}, view_name=view_name)
 
 
 # ── RUTAS ──────────────────────────────────────────────────────────────────
 
+def _docs_with_docx_template() -> set:
+    """Devuelve el conjunto de doc_ids que tienen un _template.docx en templates/."""
+    return {p.stem.replace("_template", "") for p in TEMPLATES_DIR.glob("*_template.docx")}
+
+
 @app.route("/")
 def index():
-    return render_template("ui/index.html", documents=DOCUMENTS)
+    return render_template("ui/index.html", documents=DOCUMENTS, docx_docs=_docs_with_docx_template())
 
 
 @app.route("/api/status")
@@ -154,6 +182,52 @@ def download_html(doc_id: str):
         html,
         mimetype="text/html",
         headers={"Content-Disposition": f"attachment; filename={doc_id}.html"}
+    )
+
+
+@app.route("/download/<doc_id>/docx")
+def download_docx(doc_id: str):
+    """Descarga el documento como Word usando la plantilla templates/<doc_id>_template.docx."""
+    from docx_generator import render_docx_template, CONTEXT_BUILDERS
+
+    view_id = request.args.get("view_id") or None
+
+    # Buscar doc y tabla
+    doc = None
+    table_key = None
+    for t_key, t_cfg in DOCUMENTS.items():
+        if doc_id in t_cfg["docs"]:
+            doc = t_cfg["docs"][doc_id]
+            table_key = t_key
+            break
+    if not doc:
+        return "Documento no encontrado", 404
+
+    template_path = TEMPLATES_DIR / f"{doc_id}_template.docx"
+    if not template_path.exists():
+        return f"No existe plantilla Word para '{doc_id}'. Añade templates/{doc_id}_template.docx", 404
+
+    if table_key == "bestiary":
+        data = get_bestiary_entries(view_id=view_id, full=True)
+    else:
+        data = get_table(table_key, view_id=view_id)
+
+    view_name = _resolve_view_name(table_key, view_id)
+
+    builder = CONTEXT_BUILDERS.get(doc_id)
+    if builder:
+        context = builder(data, titulo=doc["label"], view_name=view_name)
+    else:
+        context = {doc["data_key"]: data, "view_name": view_name, "titulo": doc["label"]}
+
+    docx_bytes = render_docx_template(template_path, context)
+
+    filename = f"{doc_id}{'_' + view_name if view_name else ''}.docx"
+    return send_file(
+        io.BytesIO(docx_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=filename
     )
 
 
