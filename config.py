@@ -82,4 +82,11 @@ TABLE_CONFIG = {
         "relations": []
     },
 
+    "bestiary": {
+        "table_id": "m1c3skvkx8mdwhl",
+        "view_id": "vwvf9tunnwo0jfks",
+        "fields": ["name", "type", "concept", "wild_card", "data", "image"],
+        "relations": []
+    },
+
 }

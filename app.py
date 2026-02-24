@@ -8,7 +8,7 @@ import io
 import json
 import requests as req
 from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG
-from nocodb_client import get_table, get_characters, get_character
+from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry
 from jinja2 import Environment, FileSystemLoader
 
 app = Flask(__name__)
@@ -44,6 +44,13 @@ DOCUMENTS = {
             "hindrances": {"label": "Manual de Desventajas", "icon": "📖", "template": "hindrances_manual.html", "data_key": "hindrances"},
         }
     },
+    "bestiary": {
+        "label": "Bestiario",
+        "icon": "🐉",
+        "docs": {
+            "bestiary_mobile": {"label": "Bestiario Móvil", "icon": "📱", "template": "bestiary_mobile.html", "data_key": "creatures"},
+        }
+    },
     "character": {
         "label": "Personajes",
         "icon": "🧙",
@@ -67,7 +74,12 @@ def render_document(doc_id: str, view_id: str | None = None) -> str:
     if not doc:
         raise ValueError(f"Documento '{doc_id}' no encontrado")
 
-    data = get_table(table_key, view_id=view_id)
+    # Obtener datos según el tipo de tabla
+    if table_key == "bestiary":
+        data = get_bestiary_entries(view_id=view_id, full=True)
+    else:
+        data = get_table(table_key, view_id=view_id)
+
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
     template = env.get_template(doc["template"])
     return template.render(**{doc["data_key"]: data})
@@ -349,6 +361,118 @@ def form_data():
             "hindrances": hindrances,
             "powers":     powers,
             "ancestries": ancestries,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ── GESTIÓN DE BESTIARIO ──────────────────────────────────────────────────
+
+@app.route("/bestiary")
+def bestiary_list():
+    """Lista todas las criaturas del bestiario."""
+    try:
+        creatures = get_bestiary_entries(full=True)
+    except Exception as e:
+        creatures = []
+    return render_template("ui/bestiary.html", creatures=creatures)
+
+
+@app.route("/bestiary/new")
+def bestiary_new():
+    """Formulario de nueva criatura."""
+    return render_template("ui/bestiary_form.html", record_id=None, creature=None, image_url=None)
+
+
+@app.route("/bestiary/<int:record_id>/edit")
+def bestiary_edit(record_id: int):
+    """Formulario de edición de criatura existente."""
+    try:
+        result = get_bestiary_entry(record_id)
+    except Exception as e:
+        return f"Error al cargar criatura: {e}", 500
+    return render_template("ui/bestiary_form.html",
+                           record_id=record_id,
+                           creature=result["creature"],
+                           image_url=result["image_url"])
+
+
+@app.route("/bestiary/save", methods=["POST"])
+def bestiary_save():
+    """Guarda o actualiza una criatura en NocoDB."""
+    record_id = request.form.get("record_id") or None
+    creature_json = request.form.get("creature_json", "{}")
+    image_file = request.files.get("image")
+
+    cfg = TABLE_CONFIG["bestiary"]
+    headers = {"xc-token": API_TOKEN}
+
+    parsed = json.loads(creature_json)
+    record_data = {
+        "name":    parsed.get("name", "Sin nombre"),
+        "type":    parsed.get("type", ""),
+        "concept": parsed.get("concept", ""),
+        "data":    creature_json,
+    }
+
+    try:
+        if record_id:
+            record_data["Id"] = int(record_id)
+            r = req.patch(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                          headers=headers, json=record_data)
+        else:
+            r = req.post(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                         headers=headers, json=record_data)
+        r.raise_for_status()
+        saved_id = int(record_id) if record_id else (
+            r.json()[0].get("Id") if isinstance(r.json(), list) else r.json().get("Id")
+        )
+
+        if image_file and image_file.filename:
+            upload_url = f"{NOCODB_URL}/api/v2/storage/upload"
+            files = {"file": (image_file.filename, image_file.stream, image_file.mimetype)}
+            upload_r = req.post(upload_url, headers={"xc-token": API_TOKEN}, files=files)
+            upload_r.raise_for_status()
+            attachment = upload_r.json()
+            if isinstance(attachment, list):
+                attachment = attachment[0]
+            req.patch(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                      headers=headers, json={"Id": saved_id, "image": [attachment]})
+
+    except Exception as e:
+        return f"Error al guardar: {e}", 500
+
+    return redirect(url_for("bestiary_list"))
+
+
+@app.route("/bestiary/<int:record_id>/delete", methods=["POST"])
+def bestiary_delete(record_id: int):
+    """Elimina una criatura del bestiario."""
+    cfg = TABLE_CONFIG["bestiary"]
+    headers = {"xc-token": API_TOKEN}
+    try:
+        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                       headers=headers, json={"Id": record_id})
+        r.raise_for_status()
+    except Exception as e:
+        return f"Error al eliminar: {e}", 500
+    return redirect(url_for("bestiary_list"))
+
+
+@app.route("/api/form-data/bestiary")
+def form_data_bestiary():
+    """Datos para el formulario de criatura (habilidades, ventajas, etc.)."""
+    try:
+        # Usar view_id de config para respetar orden y filtros de NocoDB
+        skills     = get_table("skill",     view_id=TABLE_CONFIG["skill"]["view_id"])
+        edges      = get_table("edge",      view_id=TABLE_CONFIG["edge"]["view_id"])
+        hindrances = get_table("hindrance", view_id=TABLE_CONFIG["hindrance"]["view_id"])
+        powers     = get_table("power",     view_id=TABLE_CONFIG["power"]["view_id"])
+        return jsonify({
+            "skills":     skills,
+            "edges":      edges,
+            "hindrances": hindrances,
+            "powers":     powers,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -187,6 +187,91 @@ def get_character(record_id: int) -> dict:
     return {"character": character, "image_url": image_url}
 
 
+
+def get_bestiary_entries(view_id: str | None = None, full: bool = False) -> list[dict]:
+    """
+    Devuelve lista de entradas del bestiario.
+    - full=False: solo Id, name, type, concept (para listados)
+    - full=True: registros completos con data parseado e image_url
+    """
+    cfg = TABLE_CONFIG["bestiary"]
+    effective_view_id = view_id or cfg.get("view_id")
+
+    if not full:
+        params = {"limit": 200, "fields": "Id,name,type,concept"}
+        if effective_view_id:
+            params["viewId"] = effective_view_id
+        url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records"
+        r = requests.get(url, headers=HEADERS, params=params)
+        r.raise_for_status()
+        return r.json().get("list", [])
+
+    import json as _json
+    records = get_table("bestiary", view_id)
+    result = []
+    for rec in records:
+        raw_data = rec.get("data") or "{}"
+        if isinstance(raw_data, str):
+            creature = _json.loads(raw_data)
+        else:
+            creature = raw_data
+        # data puede llegar como lista [{}] — extraer el primer elemento
+        if isinstance(creature, list):
+            creature = creature[0] if creature else {}
+
+        image_url = None
+        attachments = rec.get("image") or []
+        if attachments:
+            signed_path = attachments[0].get("signedPath")
+            if signed_path:
+                image_url = f"{NOCODB_URL}/{signed_path}"
+
+        # wild_card puede venir del campo propio o del JSON
+        wild_card = rec.get("wild_card") or creature.get("wild_card") or 0
+
+        result.append({
+            "id": rec.get("Id"),
+            "name": rec.get("name"),
+            "type": rec.get("type"),
+            "concept": rec.get("concept"),
+            "wild_card": bool(wild_card),
+            "data": creature,
+            "image_url": image_url,
+        })
+    return result
+
+
+def get_bestiary_entry(record_id: int) -> dict:
+    """
+    Devuelve una criatura completa:
+      - 'creature': dict con todos los datos (parseado desde el campo 'data')
+      - 'image_url': URL firmada de la imagen
+    """
+    import json as _json
+    cfg = TABLE_CONFIG["bestiary"]
+    url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records/{record_id}"
+    r = requests.get(url, headers=HEADERS)
+    r.raise_for_status()
+    record = r.json()
+
+    raw_data = record.get("data") or "{}"
+    if isinstance(raw_data, str):
+        creature = _json.loads(raw_data)
+    else:
+        creature = raw_data
+    # data puede llegar como lista [{}] — extraer el primer elemento
+    if isinstance(creature, list):
+        creature = creature[0] if creature else {}
+
+    image_url = None
+    attachments = record.get("image") or []
+    if attachments:
+        signed_path = attachments[0].get("signedPath")
+        if signed_path:
+            image_url = f"{NOCODB_URL}/{signed_path}"
+
+    return {"creature": creature, "image_url": image_url}
+
 if __name__ == "__main__":
     import json
     import sys

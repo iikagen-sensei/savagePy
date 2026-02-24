@@ -28,7 +28,9 @@ body { background:var(--bg); color:var(--ink); font-family:'EB Garamond',Georgia
 header { background:var(--ink); padding:0 3rem; display:flex; align-items:stretch; justify-content:space-between; height:56px; border-bottom:3px solid var(--red); position:sticky; top:0; z-index:50; }
 .header-right { display:flex; align-items:center; gap:1rem; height:100%; }
 .logo { display:flex; align-items:center; gap:0.8rem; text-decoration:none; }
-.logo-mark { width:30px; height:30px; background:var(--red); display:flex; align-items:center; justify-content:center; color:#fff; font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; }
+.logo-mark { width:2rem; height:2rem; display:flex; align-items:center; justify-content:center; transform:translateY(-0.15rem); }
+.logo-mark::before { content:"♠"; font-size:2.4rem; color:var(--red); transform: translateY(-0.20rem);}
+/* alternate logos can still be applied via background-image if needed */
 .logo-name { font-family:'Cinzel',serif; font-size:0.95rem; font-weight:700; color:#fff; letter-spacing:0.06em; }
 .logo-name span { color:#555; font-weight:400; font-size:0.82rem; }
 .sw-nav { display:flex; align-items:stretch; flex-shrink:0; flex:1; justify-content:center; height:100%; }
@@ -113,6 +115,7 @@ footer { border-top:1px solid var(--border); padding:0.8rem 3rem; font-family:'R
 
 /* form sections (character form) */
 .section-header { margin-bottom:0.6rem; padding-left:0.6rem; border-left:4px solid var(--red); cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+.section-header:hover { background:#e8e8e6; }
 .section-header::after { content:'▾'; font-size:0.8rem; transition:transform 0.2s; margin-left:0.5rem; }
 .section-header .section-title { font-family:'Cinzel',serif; font-size:1.1rem; font-weight:700; color:var(--ink); }
 .section.collapsed .section-body { display:none; }
@@ -120,6 +123,7 @@ footer { border-top:1px solid var(--border); padding:0.8rem 3rem; font-family:'R
 .list-head-title { font-family:'Cinzel',serif; font-size:1.3rem; font-weight:700; }
 .chars-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:1.5rem; }
 .char-card { background:#fff; border:1px solid var(--border); display:flex; flex-direction:column; }
+.char-card.wildcard { border-color:var(--red); border-width:2px; }
 .char-card-img { aspect-ratio:2/3; background:#fff; overflow:hidden; position:relative; }
 .char-card-img img { width:100%; height:100%; object-fit:contain; background:#fff; }
 .char-card-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:3.5rem; background:linear-gradient(160deg,var(--ink2) 0%,var(--ink) 100%); opacity:0.25; }
@@ -158,6 +162,10 @@ footer { border-top:1px solid var(--border); padding:0.8rem 3rem; font-family:'R
 .field-row.cols-1 { grid-template-columns:1fr; }
 .field-row.cols-2 { grid-template-columns:1fr 1fr; }
 .field-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+
+/* especial para fila de power trapping / puntos de poder */
+.power-row { grid-template-columns:3fr 1fr; }
+.power-row #powerTrapping { text-align:left; }
 .field { display:flex; flex-direction:column; gap:0.3rem; }
 label { font-family:'Rajdhani',sans-serif; font-size:0.68rem; font-weight:600; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
 input[type="text"], textarea, select { background:var(--bg); border:1px solid var(--border); color:var(--ink); font-family:'EB Garamond',Georgia,serif; font-size:1rem; padding:0.45rem 0.65rem; width:100%; transition:border-color 0.15s; }
