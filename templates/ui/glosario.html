@@ -23,7 +23,7 @@
 
 <main class="sw-main">
   {% for key, label in tabs %}
-  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ key }}">
+  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ key }}" style="border-bottom:none;">
     <div class="section-head">
       <span class="section-name">{{ label }}</span>
       <input class="glosario-search" type="search" placeholder="Buscar..." oninput="filterTable('{{ key }}', this.value)">

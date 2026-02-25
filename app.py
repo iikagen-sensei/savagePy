@@ -520,6 +520,7 @@ def glosario():
     for key, _ in tabs:
         records = get_table(key)
         data[key] = [{"name": r.get("name") or r.get("title") or "", "name_original": r.get("name_original")} for r in records]
+        # data[key] = [{"name": r.get("name") or "", "name_original": r.get("name_original")} for r in records if r.get("name")]
     return render_template("ui/glosario.html", tabs=tabs, data=data)
 
 
