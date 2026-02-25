@@ -27,6 +27,20 @@ if not API_TOKEN:
 #
 TABLE_CONFIG = {
 
+    "skill": {
+        "table_id": "mr9wckj7cenfu9e",
+        "view_id": "vwoambz1ghunrsef",
+        "fields": None,
+        "relations": []
+    },
+
+    "ancestry": {
+        "table_id": "m7idr6p4v8bnebf",
+        "view_id": "vwblot2ljkdf3938",
+        "fields": ["name", "name_original", "traits"],
+        "relations": []
+    },    
+
     "power": {
         "table_id": "mx88eizkev8cy9i",
         "view_id": "vw4f52nynn9mora5",
@@ -59,23 +73,9 @@ TABLE_CONFIG = {
         "relations": []
     },
 
-    "skill": {
-        "table_id": "mr9wckj7cenfu9e",
-        "view_id": "vwoambz1ghunrsef",
-        "fields": None,
-        "relations": []
-    },
-
-    "ancestry": {
-        "table_id": "m7idr6p4v8bnebf",
-        "view_id": "vwblot2ljkdf3938",
-        "fields": ["name", "name_original", "traits"],
-        "relations": []
-    },
-
     "character": {
         "table_id": "mxb6bj2wpwq1plw",
-        "view_id": None,
+        "view_id": "vwnp34efxdp32d6y",
         "fields": ["name", "data", "image"],
         "relations": []
     },
@@ -89,10 +89,10 @@ TABLE_CONFIG = {
 
     "treasure": {
         "table_id": "m36nr536uiox6ev",
-        "view_id": None,
+        "view_id": "vwyr4wd409u36rbv",
         "fields": ["name", "type", "stat", "description", "ability", "rarity", "image"],
         "relations": []
-    },
+    }
 
 }
 
@@ -117,11 +117,14 @@ DOCUMENTS = {
     "power": {
         "label": "Poderes",
         "icon": "✦",
+        "description": "Capacidades extraordinarias que permiten ejecutar efectos asombrosos",
+        "image": "images/power.jpg",
         "docs": {
             "powers": {
                 "label": "Manual de Poderes",
                 "icon": "📖",
                 "description": "Referencia completa con descripción y modificadores",
+                "image": "images/book01.jpg",
                 "template": "documents/powers_manual.html",
                 "data_key": "powers",
             },
@@ -129,6 +132,7 @@ DOCUMENTS = {
                 "label": "Cartas de Poderes",
                 "icon": "🂠",
                 "description": "Formato tarjeta para imprimir",
+                "image": "images/banner01.jpg",
                 "template": "documents/power_cards.html",
                 "data_key": "powers",
             },
@@ -136,6 +140,7 @@ DOCUMENTS = {
                 "label": "Cartas Móvil",
                 "icon": "📱",
                 "description": "Optimizado para teléfono (108×240mm)",
+                "image": "images/relic01.jpg",
                 "template": "documents/power_cards_mobile.html",
                 "data_key": "powers",
             },
@@ -144,11 +149,14 @@ DOCUMENTS = {
     "edge": {
         "label": "Ventajas",
         "icon": "⚔",
+        "description": "Aptitudes y rasgos extraordinarios de los personajes",
+        "image": "images/edge.jpg",
         "docs": {
             "edges": {
                 "label": "Manual de Ventajas",
                 "icon": "📖",
                 "description": "Referencia completa con descripción",
+                "image": "images/book01.jpg",
                 "template": "documents/edges_manual.html",
                 "data_key": "edges",
             },
@@ -156,6 +164,7 @@ DOCUMENTS = {
                 "label": "Cartas Móvil",
                 "icon": "📱",
                 "description": "Optimizado para teléfono (108×240mm)",
+                "image": "images/relic01.jpg",
                 "template": "documents/edge_cards_mobile.html",
                 "data_key": "edges",
             },
@@ -164,50 +173,62 @@ DOCUMENTS = {
     "hindrance": {
         "label": "Desventajas",
         "icon": "☠",
+        "description": "Rasgos negativos que impulsan el drama",
+        "image": "images/hindrance.jpg",
         "docs": {
             "hindrances": {
                 "label": "Manual de Desventajas",
                 "icon": "📖",
                 "description": "Referencia completa con descripción",
+                "image": "images/book01.jpg",
                 "template": "documents/hindrances_manual.html",
                 "data_key": "hindrances",
-            },
-        }
-    },
-    "bestiary": {
-        "label": "Bestiario",
-        "icon": "🐉",
-        "docs": {
-            "bestiary_mobile": {
-                "label": "Bestiario Móvil",
-                "icon": "📱",
-                "description": "Optimizado para teléfono (108×240mm)",
-                "template": "documents/bestiary_mobile.html",
-                "data_key": "creatures",
             },
         }
     },
     "character": {
         "label": "Personajes",
         "icon": "🧙",
+        "description": "Héroes que pueblan un mundo de aventuras",
+        "image": "images/character.jpg",
         "docs": {
             "character_sheet": {
                 "label": "Ficha de Personaje",
                 "icon": "📄",
                 "description": "Ficha completa A4 doble cara, lista para imprimir",
+                "image": "images/letter01.jpg",
                 "template": "documents/character_sheet.html",
                 "data_key": None,
+            },
+        }
+    },
+    "bestiary": {
+        "label": "Bestiario",
+        "icon": "🐉",
+        "description": "Criaturas y bestias antagonistas",
+        "image": "images/bestiary.jpg",
+        "docs": {
+            "bestiary_mobile": {
+                "label": "Bestiario Móvil",
+                "icon": "📱",
+                "description": "Optimizado para teléfono (108×240mm)",
+                "image": "images/relic01.jpg",
+                "template": "documents/bestiary_mobile.html",
+                "data_key": "creatures",
             },
         }
     },
     "treasure": {
         "label": "Tesoros",
         "icon": "💎",
+        "description": "Reliquias y objetos de gran relevancia",
+        "image": "images/treasure.jpg",
         "docs": {
             "treasure_cards": {
                 "label": "Tarjetas de Tesoro",
                 "icon": "🃏",
                 "description": "Formato tarjeta para imprimir (64×89mm)",
+                "image": "images/banner01.jpg",
                 "template": "documents/treasure_cards.html",
                 "data_key": "treasures",
             },

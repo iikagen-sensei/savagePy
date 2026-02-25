@@ -160,7 +160,7 @@ def download_docx(doc_id: str):
     if not doc:
         return "Documento no encontrado", 404
 
-    template_path = TEMPLATES_DIR / f"{doc_id}_template.docx"
+    template_path = DOCUMENTS_DIR / f"{doc_id}_template.docx"
     if not template_path.exists():
         return f"No existe plantilla Word para '{doc_id}'. Añade templates/{doc_id}_template.docx", 404
 
@@ -286,7 +286,7 @@ def characters_list():
     los registros en el modo completo.
     """
     try:
-        chars = get_characters(full=True)
+        chars = get_characters(full=True, view_id=TABLE_CONFIG["character"]["view_id"])
     except Exception as e:
         chars = []
     return render_template("ui/characters.html", characters=chars)
@@ -403,7 +403,7 @@ def form_data():
 def bestiary_list():
     """Lista todas las criaturas del bestiario."""
     try:
-        creatures = get_bestiary_entries(full=True)
+        creatures = get_bestiary_entries(full=True, view_id=TABLE_CONFIG["bestiary"]["view_id"])
     except Exception as e:
         creatures = []
     return render_template("ui/bestiary.html", creatures=creatures)
@@ -507,6 +507,20 @@ def form_data_bestiary():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/glosario")
+def glosario():
+    tabs = [
+        ("power",     "Poderes"),
+        ("edge",      "Ventajas"),
+        ("hindrance", "Desventajas"),
+        ("skill",     "Habilidades"),
+    ]
+    data = {}
+    for key, _ in tabs:
+        records = get_table(key)
+        data[key] = [{"name": r.get("name") or r.get("title") or "", "name_original": r.get("name_original")} for r in records]
+    return render_template("ui/glosario.html", tabs=tabs, data=data)
 
 
 if __name__ == "__main__":

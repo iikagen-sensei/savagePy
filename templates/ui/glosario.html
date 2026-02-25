@@ -1,0 +1,92 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Glosario · Savage Worlds{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Referencia de traducciones</div>
+    <h1>Glosario<br>de <strong>términos</strong></h1>
+  </div>
+</div>
+
+<div class="stats-strip">
+  {% for key, label in tabs %}
+  <button class="stat-item {% if loop.first %}active{% endif %}"
+          id="tab-{{ key }}"
+          onclick="switchTab('{{ key }}')">
+    <span class="stat-n">{{ data[key]|length }}</span>
+    <span class="stat-l">{{ label }}</span>
+  </button>
+  {% endfor %}
+</div>
+
+<main class="sw-main">
+  {% for key, label in tabs %}
+  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ key }}">
+    <div class="section-head">
+      <span class="section-name">{{ label }}</span>
+      <input class="glosario-search" type="search" placeholder="Buscar..." oninput="filterTable('{{ key }}', this.value)">
+    </div>
+    <table class="glosario-table">
+      <thead>
+        <tr>
+          <th onclick="sortTable('{{ key }}', 0)" class="sortable">Español <span class="sort-icon">↕</span></th>
+          <th onclick="sortTable('{{ key }}', 1)" class="sortable">Original <span class="sort-icon">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="tbody-{{ key }}">
+        {% for item in data[key] %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.name_original or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endfor %}
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function filterTable(key, query) {
+    const q = query.trim().toLowerCase();
+    document.querySelectorAll(`#tbody-${key} tr`).forEach(row => {
+      const text = Array.from(row.cells).map(c => c.textContent.toLowerCase()).join(' ');
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  function switchTab(key) {
+    document.querySelectorAll('.stat-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.doc-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + key).classList.add('active');
+    document.getElementById('panel-' + key).classList.add('active');
+  }
+
+  const sortState = {};
+
+  function sortTable(key, col) {
+    const tbody = document.getElementById('tbody-' + key);
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const state = sortState[key] || {};
+    const asc = state.col === col ? !state.asc : true;
+    sortState[key] = { col, asc };
+
+    rows.sort((a, b) => {
+      const A = a.cells[col].textContent.trim().toLowerCase();
+      const B = b.cells[col].textContent.trim().toLowerCase();
+      return asc ? A.localeCompare(B, 'es') : B.localeCompare(A, 'es');
+    });
+
+    // Actualizar iconos
+    document.querySelectorAll(`#panel-${key} .sort-icon`).forEach((el, i) => {
+      el.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+  }
+</script>
+{% endblock %}

@@ -92,7 +92,7 @@ footer { border-top:1px solid var(--border); padding:0.8rem 3rem; font-family:'R
 .doc-section { margin-bottom:2.5rem; padding-bottom:2.5rem; border-bottom:1px solid var(--border); }
 .doc-section:last-child { border-bottom:none; margin-bottom:0; }
 .section-head { display:flex; align-items:center; gap:0.8rem; margin-bottom:1.2rem; padding-bottom:0.8rem; border-bottom:2px solid var(--ink); }
-.section-icon { font-size:1.2rem; opacity:0.5; }
+.section-img { width:48px; height:48px; }
 .section-name { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:700; color:var(--ink); letter-spacing:0.03em; }
 .section-desc { font-size:1rem; color:var(--muted); font-style:italic; margin-left:auto; }
 .view-row { display:flex; align-items:center; gap:0.8rem; margin-bottom:1rem; }
@@ -104,7 +104,7 @@ footer { border-top:1px solid var(--border); padding:0.8rem 3rem; font-family:'R
 .docs-list { display:flex; flex-direction:column; }
 .doc-row { display:flex; align-items:center; padding:1rem 0; border-bottom:1px solid var(--border); gap:1rem; }
 .doc-row:last-child { border-bottom:none; }
-.doc-icon-wrap { width:36px; height:36px; background:var(--bg2); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.doc-icon-wrap { width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .doc-info { flex:1; }
 .doc-name { font-family:'EB Garamond',serif; font-size:1.25rem; font-weight:500; color:var(--ink); }
 .doc-desc { font-size:0.95rem; color:var(--muted); font-style:italic; }
@@ -231,3 +231,22 @@ select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns=
 .stat-icon { font-size:1rem; opacity:0.6; }
 .doc-section { display:none; }
 .doc-section.active { display:block; }
+
+/* ── IMÁGENES DE TABS Y DOCS ── */
+.doc-icon-wrap img { width:48px; height:48px; object-fit:contain; }
+
+/* ── GLOSARIO ── */
+.footer-glosario { color:var(--muted); font-size:0.68rem; font-family:'Rajdhani',sans-serif; letter-spacing:0.1em; text-transform:uppercase; text-decoration:none; margin-right:1.5rem; }
+.footer-glosario:hover { color:var(--ink); }
+.glosario-table { width:100%; border-collapse:collapse; font-family:'EB Garamond',serif; font-size:1.05rem; }
+.glosario-table thead th { font-family:'Rajdhani',sans-serif; font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); padding:0.5rem 1rem 0.5rem 0; border-bottom:2px solid var(--ink); text-align:left; }
+.glosario-table th.sortable { cursor:pointer; user-select:none; }
+.glosario-table th.sortable:hover { color:var(--ink); }
+.sort-icon { font-size:0.65rem; opacity:0.5; }
+.glosario-table tbody tr { border-bottom:1px solid var(--border); }
+.glosario-table tbody tr:last-child { border-bottom:none; }
+.glosario-table tbody tr:hover { background:var(--bg2); }
+.glosario-table td { padding:0.5rem 1rem 0.5rem 0; color:var(--ink); }
+.glosario-table td:last-child { color:var(--muted); font-style:italic; }
+.glosario-search { margin-left:auto; font-family:'EB Garamond',serif; font-size:1rem; padding:0.3rem 0.7rem; border:1px solid var(--border); background:#fff; color:var(--ink); outline:none; }
+.glosario-search:focus { outline:2px solid var(--red); outline-offset:-2px; }
