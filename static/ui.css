@@ -54,8 +54,8 @@ header { background:var(--ink); padding:0 3rem; display:flex; align-items:stretc
 .hero h1 { font-family:'EB Garamond',serif; font-size:clamp(2.4rem,4vw,3.4rem); font-weight:400; color:#f5f5f3; line-height:1.15; }
 .hero h1 strong { font-weight:600; color:#fff; }
 
-.stats-strip { background:var(--bg2); border-bottom:1px solid var(--border); display:flex; padding:0 3rem; flex-wrap:wrap; }
-.stat-item { padding:0.85rem 2rem 0.85rem 0; margin-right:2rem; border-right:1px solid var(--border); display:flex; align-items:baseline; gap:0.5rem; }
+.stats-strip { background:var(--bg2); border-bottom:1px solid var(--border); display:flex; padding:0; flex-wrap:wrap; justify-content:center; }
+.stat-item { padding:0.85rem 2rem; border-right:1px solid var(--border); display:flex; align-items:baseline; gap:0.5rem; justify-content:center; }
 .stat-item:last-child { border-right:none; }
 
 /* status box in stats strip – keep appearance subtle */
@@ -223,3 +223,11 @@ select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns=
 
 @keyframes pulse { 0%,100%{opacity:.3} 50%{opacity:1} }
 @keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── TABS (stat-item como botón, doc-section como panel) ── */
+.stat-item { cursor:pointer; background:none; border:none; border-bottom:3px solid transparent; text-align:left; transition:border-color 0.15s, background 0.15s; }
+.stat-item:hover { background:rgba(0,0,0,0.04); }
+.stat-item.active { border-bottom-color:var(--red); }
+.stat-icon { font-size:1rem; opacity:0.6; }
+.doc-section { display:none; }
+.doc-section.active { display:block; }

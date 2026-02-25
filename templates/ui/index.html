@@ -12,16 +12,18 @@
 
 <div class="stats-strip">
   {% for table_key, table in documents.items() %}
-  <div class="stat-item">
+  <button class="stat-item {% if loop.first %}active{% endif %}"
+          id="tab-{{ table_key }}"
+          onclick="switchTab('{{ table_key }}')">
     <span class="stat-n loading" id="count-{{ table_key }}">···</span>
     <span class="stat-l">{{ table.label }}</span>
-  </div>
+  </button>
   {% endfor %}
 </div>
 
 <main class="sw-main">
   {% for table_key, table in documents.items() %}
-  <div class="doc-section">
+  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ table_key }}">
     <div class="section-head">
       <span class="section-icon">{{ table.icon }}</span>
       <span class="section-name">{{ table.label }}</span>
@@ -60,12 +62,7 @@
         <div class="doc-icon-wrap">{{ doc.icon }}</div>
         <div class="doc-info">
           <div class="doc-name">{{ doc.label }}</div>
-          <div class="doc-desc">
-            {%- if 'manual' in doc_id %}Referencia completa con descripción
-            {%- elif 'mobile' in doc_id or 'móvil' in doc.label|lower %}Optimizado para teléfono (108×240mm)
-            {%- elif 'card' in doc_id %}Formato tarjeta para imprimir
-            {%- endif %}
-          </div>
+          <div class="doc-desc">{{ doc.description }}</div>
         </div>
         <div class="doc-actions">
           <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button>
@@ -91,6 +88,12 @@
 
 {% block scripts %}
 <script>
+  function switchTab(key){
+    document.querySelectorAll('.stat-item').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.doc-section').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-'+key).classList.add('active');
+    document.getElementById('panel-'+key).classList.add('active');
+  }
   function showOverlay(txt){document.getElementById('overlayTxt').textContent=txt||'Generando...';document.getElementById('overlay').classList.add('active');}
   function hideOverlay(){document.getElementById('overlay').classList.remove('active');}
   function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show';setTimeout(()=>el.className='toast',3000);}

@@ -29,7 +29,7 @@ TABLE_CONFIG = {
 
     "power": {
         "table_id": "mx88eizkev8cy9i",
-        "view_id": "vw4f52nynn9mora5",   # Vista de NocoDB — cambia aquí el orden/filtro
+        "view_id": "vw4f52nynn9mora5",
         "fields": [
             "name", "name_original", "rank_name", "cost",
             "range", "range_roh", "duration", "page_no",
@@ -39,7 +39,7 @@ TABLE_CONFIG = {
             {
                 "key": "modifiers",
                 "link_field_id": "c48d1ciqk7ee110",
-                "count_field": "modifier",        # campo numérico en el registro padre
+                "count_field": "modifier",
                 "fields": ["title", "cost", "description"]
             }
         ]
@@ -73,8 +73,6 @@ TABLE_CONFIG = {
         "relations": []
     },
 
-    # Fichas de personaje — el JSON completo va en el campo 'data'
-    # y la imagen como adjunto en el campo 'image'
     "character": {
         "table_id": "mxb6bj2wpwq1plw",
         "view_id": None,
@@ -91,9 +89,128 @@ TABLE_CONFIG = {
 
     "treasure": {
         "table_id": "m36nr536uiox6ev",
-        "view_id": None,        # las vistas pub:Inusual, pub:Excepcional... se seleccionan en la UI
+        "view_id": None,
         "fields": ["name", "type", "stat", "description", "ability", "rarity", "image"],
         "relations": []
     },
 
+}
+
+# ── CONFIGURACIÓN DE DOCUMENTOS ────────────────────────────────────────────
+#
+# Agrupa los documentos por tabla. El orden de las entradas determina
+# el orden en que aparecen en la interfaz.
+#
+# Cada tabla define:
+#   label       : nombre visible en la barra de tabs
+#   icon        : emoji para la barra de tabs
+#   docs        : documentos generables para esta tabla
+#
+# Cada documento define:
+#   label       : nombre visible en el panel
+#   icon        : emoji para el panel
+#   description : texto descriptivo visible en la interfaz
+#   template    : archivo HTML en templates/documents/
+#   data_key    : nombre de la variable que recibe los datos en el template
+#
+DOCUMENTS = {
+    "power": {
+        "label": "Poderes",
+        "icon": "✦",
+        "docs": {
+            "powers": {
+                "label": "Manual de Poderes",
+                "icon": "📖",
+                "description": "Referencia completa con descripción y modificadores",
+                "template": "documents/powers_manual.html",
+                "data_key": "powers",
+            },
+            "cards": {
+                "label": "Cartas de Poderes",
+                "icon": "🂠",
+                "description": "Formato tarjeta para imprimir",
+                "template": "documents/power_cards.html",
+                "data_key": "powers",
+            },
+            "cards_mobile": {
+                "label": "Cartas Móvil",
+                "icon": "📱",
+                "description": "Optimizado para teléfono (108×240mm)",
+                "template": "documents/power_cards_mobile.html",
+                "data_key": "powers",
+            },
+        }
+    },
+    "edge": {
+        "label": "Ventajas",
+        "icon": "⚔",
+        "docs": {
+            "edges": {
+                "label": "Manual de Ventajas",
+                "icon": "📖",
+                "description": "Referencia completa con descripción",
+                "template": "documents/edges_manual.html",
+                "data_key": "edges",
+            },
+            "edge_cards_mobile": {
+                "label": "Cartas Móvil",
+                "icon": "📱",
+                "description": "Optimizado para teléfono (108×240mm)",
+                "template": "documents/edge_cards_mobile.html",
+                "data_key": "edges",
+            },
+        }
+    },
+    "hindrance": {
+        "label": "Desventajas",
+        "icon": "☠",
+        "docs": {
+            "hindrances": {
+                "label": "Manual de Desventajas",
+                "icon": "📖",
+                "description": "Referencia completa con descripción",
+                "template": "documents/hindrances_manual.html",
+                "data_key": "hindrances",
+            },
+        }
+    },
+    "bestiary": {
+        "label": "Bestiario",
+        "icon": "🐉",
+        "docs": {
+            "bestiary_mobile": {
+                "label": "Bestiario Móvil",
+                "icon": "📱",
+                "description": "Optimizado para teléfono (108×240mm)",
+                "template": "documents/bestiary_mobile.html",
+                "data_key": "creatures",
+            },
+        }
+    },
+    "character": {
+        "label": "Personajes",
+        "icon": "🧙",
+        "docs": {
+            "character_sheet": {
+                "label": "Ficha de Personaje",
+                "icon": "📄",
+                "description": "Ficha completa A4 doble cara, lista para imprimir",
+                "template": "documents/character_sheet.html",
+                "data_key": None,
+            },
+        }
+    },
+    "treasure": {
+        "label": "Tesoros",
+        "icon": "💎",
+        "docs": {
+            "treasure_cards": {
+                "label": "Tarjetas de Tesoro",
+                "icon": "🃏",
+                "description": "Formato tarjeta para imprimir (64×89mm)",
+                "template": "documents/treasure_cards.html",
+                "data_key": "treasures",
+            },
+        }
+    },
 }

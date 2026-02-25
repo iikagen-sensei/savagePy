@@ -9,66 +9,15 @@ import subprocess
 import tempfile
 import json
 import requests as req
-from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG
+from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG, DOCUMENTS
 from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry
 from jinja2 import Environment, FileSystemLoader
 
 app = Flask(__name__)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+DOCUMENTS_DIR = TEMPLATES_DIR / "documents"
 
-# ── CONFIGURACIÓN DE DOCUMENTOS ────────────────────────────────────────────
-# Agrupa los documentos por tabla. Para añadir un documento nuevo,
-# añade una entrada en la tabla correspondiente.
-
-DOCUMENTS = {
-    "power": {
-        "label": "Poderes",
-        "icon": "✦",
-        "docs": {
-            "powers": {"label": "Manual de Poderes", "icon": "📖", "template": "powers_manual.html", "data_key": "powers"},
-            "cards":        {"label": "Cartas de Poderes",        "icon": "🂠", "template": "power_cards.html",        "data_key": "powers"},
-            "cards_mobile": {"label": "Cartas Móvil (PDF)",         "icon": "📱", "template": "power_cards_mobile.html", "data_key": "powers"},
-        }
-    },
-    "edge": {
-        "label": "Ventajas",
-        "icon": "⚔",
-        "docs": {
-            "edges": {"label": "Manual de Ventajas", "icon": "📖", "template": "edges_manual.html", "data_key": "edges"},
-            "edge_cards_mobile": {"label": "Cartas Móvil", "icon": "📱", "template": "edge_cards_mobile.html", "data_key": "edges"},
-        }
-    },
-    "hindrance": {
-        "label": "Desventajas",
-        "icon": "☠",
-        "docs": {
-            "hindrances": {"label": "Manual de Desventajas", "icon": "📖", "template": "hindrances_manual.html", "data_key": "hindrances"},
-        }
-    },
-    "bestiary": {
-        "label": "Bestiario",
-        "icon": "🐉",
-        "docs": {
-            "bestiary_mobile": {"label": "Bestiario Móvil", "icon": "📱", "template": "bestiary_mobile.html", "data_key": "creatures"},
-        }
-    },
-    "character": {
-        "label": "Personajes",
-        "icon": "🧙",
-        "docs": {
-            "character_sheet": {"label": "Ficha de Personaje", "icon": "📄", "template": "character_sheet.html", "data_key": None},
-        }
-    },
-
-    "treasure": {
-        "label": "Tesoros",
-        "icon": "💎",
-        "docs": {
-            "treasure_cards": {"label": "Tarjetas de Tesoro", "icon": "🃏", "template": "treasure_cards.html", "data_key": "treasures"},
-        }
-    },
-}
 
 
 def _resolve_view_name(table_key: str, view_id: str | None) -> str:
@@ -120,7 +69,7 @@ def render_document(doc_id: str, view_id: str | None = None) -> str:
 
 def _docs_with_docx_template() -> set:
     """Devuelve el conjunto de doc_ids que tienen un _template.docx en templates/."""
-    return {p.stem.replace("_template", "") for p in TEMPLATES_DIR.glob("*_template.docx")}
+    return {p.stem.replace("_template", "") for p in DOCUMENTS_DIR.glob("*_template.docx")}
 
 
 @app.route("/")
@@ -271,7 +220,7 @@ def preview_characters():
     except Exception as e:
         return f"Error al cargar personajes: {e}", 500
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
-    template = env.get_template("character_sheet.html")
+    template = env.get_template("documents/character_sheet.html")
     # Renderizar cada personaje y concatenar
     pages = []
     for record in char_list:
@@ -301,7 +250,7 @@ def download_characters_pdf():
     except Exception as e:
         return f"Error al cargar personajes: {e}", 500
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
-    template = env.get_template("character_sheet.html")
+    template = env.get_template("documents/character_sheet.html")
     pages = []
     for record in char_list:
         result = get_character(record["Id"])

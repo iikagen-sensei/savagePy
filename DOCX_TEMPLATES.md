@@ -6,12 +6,14 @@ Las plantillas `.docx` funcionan igual que los templates HTML de WeasyPrint: tú
 
 ## Cómo funciona
 
-1. El sistema lee la plantilla `templates/<nombre>_template.docx`
+1. El sistema lee la plantilla `templates/documents/<nombre>_template.docx`
 2. Sustituye los marcadores `{{ }}` con los datos reales de NocoDB
 3. Repite los bloques `{% for %}` una vez por cada elemento
 4. Devuelve el `.docx` generado para descargar
 
 El motor es **docxtpl** (versión ≥ 0.16), que usa la misma sintaxis que Jinja2.
+
+El botón **↓ Word** aparece automáticamente en la interfaz para cualquier documento que tenga su `_template.docx` correspondiente en `templates/documents/`.
 
 ---
 
@@ -70,13 +72,11 @@ Los nombres de campo exactos de la base de datos, sin formatear:
 {{ entrada.page_no }}         → "155"
 ```
 
-Puedes mezclar ambos en la misma plantilla. Si quieres la etiqueta ya hecha usas el campo formateado; si quieres controlar tú el formato usas el campo en crudo:
+Puedes mezclar ambos en la misma plantilla:
 ```
 {{ entrada.cost }} Puntos de Poder    ← tú decides el texto
 {{ entrada.coste_label }}             ← ya viene como "Coste: 2 PP"
 ```
-
-Para ver exactamente qué campos en crudo tiene cada tabla, visita `/api/debug/power`, `/api/debug/edge` o `/api/debug/hindrance` con el servidor en marcha.
 
 ---
 
@@ -117,7 +117,6 @@ Cada `entrada` dentro de `bloque.entradas`:
 | `{{ entrada.name_original }}` | crudo | `Armor` |
 | `{{ entrada.rank_name }}` | crudo | `Novato` |
 | `{{ entrada.cost }}` | crudo | `2` |
-| `{{ entrada.range }}` | crudo | alcance en inglés |
 | `{{ entrada.range_roh }}` | crudo | alcance traducido |
 | `{{ entrada.duration }}` | crudo | `3 r.` |
 | `{{ entrada.page_no }}` | crudo | `155` |
@@ -158,7 +157,7 @@ Cada `entrada` dentro de `bloque.entradas`:
 | `{{ entrada.nombre }}` | formateado | nombre (+ original si existe) |
 | `{{ entrada.fuente }}` | formateado | libro y página |
 | `{{ entrada.descripcion }}` | formateado | descripción |
-| `{{ entrada.Nombre }}` | crudo | nombre en castellano (campo con mayúscula) |
+| `{{ entrada.Nombre }}` | crudo | nombre en castellano |
 | `{{ entrada.name_original }}` | crudo | nombre original |
 | `{{ entrada.type }}` | crudo | Mayor / Menor |
 | `{{ entrada.page_no }}` | crudo | número de página |
@@ -191,11 +190,9 @@ Los párrafos con `{% for %}` y `{% endfor %}` desaparecen del resultado, así q
 
 ---
 
-## Añadir una nueva plantilla
+## Añadir una nueva plantilla Word
 
-Para añadir soporte Word a cualquier otro documento del sistema:
-
-1. Crea `templates/<doc_id>_template.docx` donde `doc_id` es el identificador del documento (`powers`, `edges`, `bestiary_mobile`…)
+1. Crea `templates/documents/<doc_id>_template.docx` donde `doc_id` es el identificador del documento (`powers`, `edges`, `bestiary_mobile`…)
 2. El botón **↓ Word** aparecerá automáticamente en la interfaz al reiniciar el servidor
 3. Si el documento necesita preparación de datos especial, añade un `build_<doc_id>_context()` en `docx_generator.py`; si no, el sistema pasa los datos en crudo
 
