@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha · {{ character.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:            #1a1208;
+      --parchment:      #f5ede0;
+      --parchment-dark: #e8d9c0;
+      --gold:           #8b6914;
+      --gold-light:     #c9a84c;
+      --crimson:        #7a1c1c;
+      --shadow:         rgba(26,18,8,0.18);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #2c2416;
+      font-family: 'EB Garamond', Georgia, serif;
+      color: var(--ink);
+      padding: 2rem;
+    }
+
+    .sheet {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--parchment);
+      border: 1px solid var(--gold);
+      box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+    }
+    .sheet ~ .sheet {
+      page-break-before: always;
+    }
+
+    /* ── CABECERA ── */
+    .header {
+      display: grid;
+      grid-template-columns: 1fr;
+      border-bottom: 2px solid var(--gold);
+    }
+
+    .header-data {
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .char-name-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    .char-name {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--crimson);
+      letter-spacing: 0.03em;
+      line-height: 1.1;
+    }
+
+    .char-concept {
+      font-family: 'Cinzel', serif;
+      font-size: 0.78rem;
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .char-ancestry {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--parchment);
+      background: var(--gold);
+      padding: 0.15rem 0.7rem;
+      letter-spacing: 0.04em;
+    }
+
+    .ancestry-name { font-weight: 700; }
+    .ancestry-sep { opacity: 0.6; }
+    .ancestry-edges { font-weight: 400; font-style: italic; }
+
+    .char-description {
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: #3a2a14;
+      margin-top: 0.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(139,105,20,0.25);
+      text-align: justify;
+    }
+
+    /* ── SECCIÓN LABEL ── */
+    .section-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--parchment);
+      background: var(--crimson);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 0.25rem 1.4rem 0.25rem 1rem;
+      display: inline-block;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%);
+    }
+
+    /* ── ATRIBUTOS + HABILIDADES ── */
+    .stats-section {
+      border-bottom: 1px solid var(--gold);
+    }
+
+    .stats-section-header {
+      padding: 0.5rem 1rem;
+      background: rgba(139,105,20,0.06);
+      border-bottom: 1px solid rgba(139,105,20,0.2);
+    }
+
+    .stats-body {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+    }
+
+    .attributes-col {
+      border-right: 1px solid rgba(139,105,20,0.3);
+      padding: 0.8rem 1rem;
+    }
+
+    .attribute-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.15rem 0;
+      font-size: 0.88rem;
+    }
+
+    .attribute-name { color: #3a2a14; }
+
+    .attribute-value {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      color: var(--crimson);
+      font-size: 0.9rem;
+    }
+
+    .skills-col {
+      padding: 0.8rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .skills-text {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: #2a1e0e;
+    }
+
+    .skill-core { font-weight: 600; }
+
+    .edges-hindrances {
+      padding-top: 0.6rem;
+      border-top: 1px dashed rgba(139,105,20,0.3);
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: #2a1e0e;
+    }
+
+    .eh-label {
+      font-family: 'Cinzel', serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── PODERES ── */
+    .powers-section {
+      padding: 0.5rem 1rem;
+      border-top: 1px solid rgba(139,105,20,0.2);
+      border-bottom: 1px solid var(--gold);
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: #2a1e0e;
+    }
+
+    /* ── AVANCES + IMAGEN ── */
+    .advances-section {
+      border-top: 1px solid var(--gold);
+      display: grid;
+      grid-template-columns: 1fr 340px;
+    }
+
+    .advances-col {
+      border-right: 1px solid rgba(139,105,20,0.3);
+    }
+
+    .advances-header {
+      padding: 0.5rem 1rem;
+      background: rgba(139,105,20,0.06);
+      border-bottom: 1px solid rgba(139,105,20,0.2);
+    }
+
+    .advances-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .advances-table td {
+      padding: 0.18rem 0.6rem;
+      color: #2a1e0e;
+      line-height: 1.4;
+      border: none;
+    }
+
+    .advances-table td:first-child {
+      width: 28px;
+      text-align: center;
+      border-right: 1px solid rgba(139,105,20,0.15);
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      color: var(--gold);
+    }
+
+    .rank-row td {
+      color: var(--crimson);
+      border-top: 1px solid rgba(139,105,20,0.3);
+      border-bottom: 1px solid rgba(139,105,20,0.3);
+      background: white;
+    }
+
+    .rank-row td:first-child {
+      font-weight: 700;
+      border-right: 1px solid rgba(139,105,20,0.15);
+    }
+
+    .advances-image-col {
+      background: #fff;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0.8rem;
+    }
+
+    .advances-image {
+      width: 330px;
+      object-fit: cover;
+      object-position: top center;
+      box-shadow: 2px 2px 8px var(--shadow);
+    }
+
+    /* ── PÁGINA 2 ── */
+    .page-break {
+      page-break-before: always;
+      border-top: 3px double var(--gold);
+    }
+
+    .gear-section {
+      padding: 0.8rem 1rem;
+    }
+
+    .gear-rank-block {
+      margin-bottom: 1rem;
+    }
+
+    .gear-rank-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--crimson);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.3rem;
+      padding-bottom: 0.2rem;
+      border-bottom: 1px solid rgba(139,105,20,0.25);
+    }
+
+    .gear-list {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: #2a1e0e;
+    }
+
+    .gear-notes { color: #7a5a30; }
+
+    /* ── NOTAS ESPECIALES ── */
+    .special-section {
+      border-top: 1px solid var(--gold);
+    }
+
+    .special-rank-block {
+      padding: 0.3rem 1rem;
+      border-bottom: 1px dashed rgba(139,105,20,0.2);
+    }
+
+    .special-rank-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--crimson);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.15rem;
+    }
+
+    .special-content {
+      font-size: 0.83rem;
+      line-height: 1.6;
+      color: #2a1e0e;
+      min-height: 1.2rem;
+    }
+
+    /* ── PRINT ── */
+    @page {
+      size: A4;
+      margin: 1cm 1.2cm;
+    }
+
+    @media print {
+      body { background: white !important; padding: 0; }
+      .sheet {
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+        background: white !important;
+      }
+      /* Quitar todos los fondos de color */
+      .header,
+      .header-data,
+      .header-image-col,
+      .stats-section,
+      .stats-section-header,
+      .stats-body,
+      .attributes-col,
+      .skills-col,
+      .edges-hindrances,
+      .powers-section,
+      .advances-section,
+      .advances-col,
+      .advances-header,
+      .advances-image-col,
+      .gear-section,
+      .gear-rank-block,
+      .special-section,
+      .special-rank-block,
+      .page-break { background: white !important; }
+      .section-label {
+        background: var(--crimson) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page-break {
+        page-break-before: always;
+        border-top: 1px solid #8b6914;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="sheet">
+
+  {# ── PÁGINA 1 ── #}
+
+  {# CABECERA #}
+  <div class="header">
+    <div class="header-data">
+      <div>
+        <div class="char-name-row">
+          <span class="char-name">{{ character.name }}</span>
+          <span class="char-concept">{{ character.concept }}</span>
+        </div>
+        <div class="char-ancestry">
+          <span class="ancestry-name">{{ character.ancestry.name }}</span>
+          {% if character.ancestry.traits %}
+          <span class="ancestry-sep">·</span>
+          <span class="ancestry-edges">{{ character.ancestry.traits | join(', ') }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <p class="char-description">{{ character.description }}</p>
+    </div>
+  </div>
+
+  {# ATRIBUTOS + HABILIDADES #}
+  <div class="stats-section">
+    <div class="stats-section-header">
+      <span class="section-label">Atributos y Habilidades</span>
+    </div>
+    <div class="stats-body">
+
+      <div class="attributes-col">
+        <div class="attribute-row">
+          <span class="attribute-name">Agilidad</span>
+          <span class="attribute-value">{{ character.attributes.agility }}</span>
+        </div>
+        <div class="attribute-row">
+          <span class="attribute-name">Astucia</span>
+          <span class="attribute-value">{{ character.attributes.smarts }}</span>
+        </div>
+        <div class="attribute-row">
+          <span class="attribute-name">Espíritu</span>
+          <span class="attribute-value">{{ character.attributes.spirit }}</span>
+        </div>
+        <div class="attribute-row">
+          <span class="attribute-name">Fuerza</span>
+          <span class="attribute-value">{{ character.attributes.strength }}</span>
+        </div>
+        <div class="attribute-row">
+          <span class="attribute-name">Vigor</span>
+          <span class="attribute-value">{{ character.attributes.vigor }}</span>
+        </div>
+      </div>
+
+      <div class="skills-col">
+        <div class="skills-text">
+          {# Core con valor, primero #}
+          {% set core_skills = character.skills | selectattr('is_core') | selectattr('value') | list %}
+          {% set other_skills = character.skills | rejectattr('is_core') | selectattr('value') | list %}
+          {% for skill in core_skills %}
+          <span class="skill-core">{{ skill.name }} {{ skill.value }}</span>{% if not loop.last or other_skills %}, {% endif %}
+          {% endfor %}
+          {# No core con valor #}
+          {% for skill in other_skills %}
+          {{ skill.name }} {{ skill.value }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </div>
+
+        <div class="edges-hindrances">
+          {% if character.hindrances %}
+          <div>
+            <span class="eh-label">Desventajas:</span>
+            {{ character.hindrances | join(', ') }}
+          </div>
+          {% endif %}
+          {% if character.edges %}
+          <div>
+            <span class="eh-label">Ventajas:</span>
+            {{ character.edges | join(', ') }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  {# PODERES (solo si tiene) #}
+  {% if character.powers %}
+  <div class="powers-section">
+    <span class="eh-label">Poderes ({{ character.power_points }} PP):</span>
+    {{ character.powers | map(attribute='name') | join(', ') }}
+  </div>
+  {% endif %}
+
+  {# AVANCES + IMAGEN #}
+  <div class="advances-section">
+    <div class="advances-col">
+      <div class="advances-header">
+        <span class="section-label">Avances</span>
+      </div>
+      <table class="advances-table">
+        <tbody>
+          {% set ranks = ['Novato', 'Experimentado', 'Veterano', 'Heroico', 'Legendario'] %}
+          {% set rank_initials = {'Novato': 'N', 'Experimentado': 'E', 'Veterano': 'V', 'Heroico': 'H', 'Legendario': 'L'} %}
+          {% for rank in ranks %}
+            {% set rank_advances = character.advances | selectattr('rank', 'equalto', rank) | list %}
+            {% if rank_advances %}
+              {# Primera fila del rango: inicial + primer avance #}
+              <tr class="rank-row">
+                <td>{{ rank_initials[rank] }}</td>
+                <td>{{ rank_advances[0].description }}</td>
+              </tr>
+              {# Resto de avances del rango #}
+              {% for advance in rank_advances[1:] %}
+              <tr>
+                <td>{{ advance.order }}</td>
+                <td>{{ advance.description }}</td>
+              </tr>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="advances-image-col">
+      <img class="advances-image"
+           src="{{ image_url }}"
+           alt="{{ character.name }}">
+    </div>
+  </div>
+
+  {# ── PÁGINA 2 ── #}
+  <div class="page-break">
+
+    {# EQUIPO POR RANGO #}
+    <div class="advances-header">
+      <span class="section-label">Equipo por rango</span>
+    </div>
+    <div class="gear-section">
+      {% set ranks = ['Novato', 'Experimentado', 'Veterano', 'Heroico', 'Legendario'] %}
+      {% for rank in ranks %}
+        {% set items = character.gear_by_rank[rank] %}
+        {% if items %}
+        <div class="gear-rank-block">
+          <div class="gear-rank-title">{{ rank }}</div>
+          <div class="gear-list">
+            {% for item in items %}
+            {{ item.item }}{% if item.notes %} <span class="gear-notes">({{ item.notes }})</span>{% endif %}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {# NOTAS ESPECIALES — solo si hay algún rango con contenido #}
+    {% set ranks = ['Novato', 'Experimentado', 'Veterano', 'Heroico', 'Legendario'] %}
+    {% if character.special and (character.special.values() | select | list) %}
+    <div class="advances-header">
+      <span class="section-label">Notas especiales</span>
+    </div>
+    <div class="special-section">
+      {% for rank in ranks %}
+      {% if character.special[rank] %}
+      <div class="special-rank-block">
+        <div class="special-rank-title">{{ rank }}</div>
+        <div class="special-content">{{ character.special[rank] }}</div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+
+</div>
+</body>
+</html>

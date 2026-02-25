@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Cartas de Poderes · Móvil{% endblock %}
+
+{% block extra_styles %}
+<style>
+  @page {
+    size: 108mm 240mm;
+    margin: 0;
+  }
+
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    background: #1a1208;
+    margin: 0;
+    padding: 0;
+    font-family: 'Rajdhani', sans-serif;
+    color: #1a1208;
+  }
+
+  .card {
+    width: 108mm;
+    min-height: 240mm;
+    background: #f5ede0;
+    display: flex;
+    flex-direction: column;
+    page-break-after: always;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+  }
+
+  .card:last-child { page-break-after: avoid; }
+
+  /* ── CABECERA ── */
+  .card-header {
+    background: #2a1008;
+    border-bottom: 2.5px solid #c9a84c;
+    padding: 5mm 6mm 4mm;
+    flex-shrink: 0;
+  }
+
+  .card-rank {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    color: #c9a84c;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+
+  .card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 17pt;
+    font-weight: 700;
+    color: #f0d898;
+    line-height: 1.15;
+  }
+
+  .card-name-original {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10pt;
+    color: #8a7040;
+    margin-top: 1mm;
+  }
+
+  /* ── STATS ── */
+  .card-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 3mm 5mm;
+    border-bottom: 1px solid #e0d0b8;
+    background: rgba(139,105,20,0.07);
+    flex-shrink: 0;
+  }
+
+  .card-stat { text-align: center; flex: 1; }
+  .card-stat + .card-stat { border-left: 1px solid #e0d0b8; }
+
+  .card-stat-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #8b6914;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 0.5mm;
+  }
+
+  .card-stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13pt;
+    font-weight: 600;
+    color: #1a1208;
+  }
+
+  /* ── CUERPO ── */
+  .card-body {
+    padding: 5mm 6mm;
+    flex: 1;
+  }
+
+  .card-description {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13pt;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #2a1e0e;
+  }
+
+  /* ── MODIFICADORES ── */
+  .card-modifiers {
+    padding: 3.5mm 6mm 5mm;
+    border-top: 1px dashed rgba(139,105,20,0.35);
+    flex-shrink: 0;
+  }
+
+  .card-modifiers-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #8b6914;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin-bottom: 2.5mm;
+  }
+
+  .card-modifier {
+    margin-bottom: 2.5mm;
+    font-size: 11pt;
+    line-height: 1.45;
+    color: #3a2a14;
+  }
+
+  .card-modifier-cost {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    color: #7a1c1c;
+    font-size: 11pt;
+    margin-right: 1mm;
+  }
+
+  .card-modifier-title {
+    font-weight: 700;
+    color: #1a1208;
+  }
+
+  .card-modifier-desc {
+    font-weight: 400;
+    color: #5a4020;
+  }
+
+  /* ── PIE ── */
+  .card-footer {
+    padding: 2.5mm 6mm;
+    border-top: 1px solid #e0d0b8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(139,105,20,0.05);
+    flex-shrink: 0;
+  }
+
+  .card-source {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 8pt;
+    color: #8b6914;
+    letter-spacing: 0.05em;
+  }
+
+  .card-ornament {
+    font-size: 9pt;
+    color: #c9a84c;
+    opacity: 0.6;
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+{% for power in powers %}
+<div class="card">
+
+  <div class="card-header">
+    {% if power.rank_name %}<div class="card-rank">{{ power.rank_name }}</div>{% endif %}
+    <div class="card-name">{{ power.name }}</div>
+    {% if power.name_original %}<div class="card-name-original">{{ power.name_original }}</div>{% endif %}
+  </div>
+
+  {% if power.cost or power.range or power.range_roh or power.duration %}
+  <div class="card-stats">
+    {% if power.cost %}
+    <div class="card-stat">
+      <span class="card-stat-label">Coste</span>
+      <span class="card-stat-value">{{ power.cost }} PP</span>
+    </div>
+    {% endif %}
+    {% if power.range or power.range_roh %}
+    <div class="card-stat">
+      <span class="card-stat-label">Alcance</span>
+      <span class="card-stat-value">{{ power.range_roh or power.range }}</span>
+    </div>
+    {% endif %}
+    {% if power.duration %}
+    <div class="card-stat">
+      <span class="card-stat-label">Duración</span>
+      <span class="card-stat-value">{{ power.duration }}r</span>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if power.description %}
+  <div class="card-body">
+    <p class="card-description">{{ power.description }}</p>
+  </div>
+  {% endif %}
+
+  {% if power.modifiers %}
+  <div class="card-modifiers">
+    <div class="card-modifiers-label">✦ Modificadores</div>
+    {% for mod in power.modifiers %}
+    <div class="card-modifier">
+      <span class="card-modifier-cost">{{ mod.cost }}</span>
+      <span class="card-modifier-title">{{ mod.title }}:</span>
+      <span class="card-modifier-desc"> {{ mod.description }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card-footer">
+    <span class="card-source">
+      {% if power.reference_book %}{{ power.reference_book.title }}{% if power.page_no %} p.{{ power.page_no }}{% endif %}{% endif %}
+    </span>
+    <span class="card-ornament">❧</span>
+  </div>
+
+</div>
+{% endfor %}
+{% endblock %}

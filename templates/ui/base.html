@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Savage Worlds · Generador{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/ui.css?v=1">
+  <link rel="stylesheet" href="/static/ui.css">
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">  
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">
+    <div class="logo-mark"></div>
+    <div class="logo-name">Savage Worlds <span>· Generador</span></div>
+  </a>
+  <div class="header-right">
+    <div class="header-status">
+      <span class="dot" id="dot"></span>
+      <span id="statusTxt">Conectando...</span>
+    </div>
+    <nav class="sw-nav">
+      <a href="/"           {% if request.path == '/'                    %}class="active"{% endif %}>Documentos</a>
+      <a href="/characters" {% if request.path.startswith('/characters') %}class="active"{% endif %}>Personajes</a>
+      <a href="/bestiary"   {% if request.path.startswith('/bestiary')   %}class="active"{% endif %}>Bestiario</a>
+    </nav>
+  </div>
+</header>
+
+{% block header_extra %}{% endblock %}
+
+{% block body %}{% endblock %}
+
+<footer>Savage Worlds Generator · Uso interno</footer>
+
+<script>
+async function loadStatus() {
+  try {
+    await fetch('/api/status');
+    document.getElementById('dot').className = 'dot online';
+    document.getElementById('statusTxt').textContent = 'NocoDB conectado';
+  } catch {
+    document.getElementById('dot').className = 'dot offline';
+    document.getElementById('statusTxt').textContent = 'Sin conexión';
+  }
+}
+loadStatus();
+</script>
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

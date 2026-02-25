@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Bestiario</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: 108mm 192mm;
+      margin: 0 0 7mm 0;
+      @bottom-center {
+        content: element(running-footer);
+        width: 108mm;
+        vertical-align: top;
+      }
+    }
+    @page page1-type {
+      size: 108mm 192mm;
+      margin: 0;
+      @bottom-center { content: none; }
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'EB Garamond',Georgia,serif; background:#fff; color:#111110; }
+
+    /* running footer para páginas 2+ */
+    .running-footer {
+      position: running(running-footer);
+      width: 98mm;
+      margin: 0 5mm;
+      border-top: 1.5pt solid #111110;
+      padding-top: 1.5mm;
+      display: table;
+    }
+    .running-footer-l, .running-footer-r {
+      display: table-cell;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888880;
+    }
+    .running-footer-r { text-align: right; }
+    .running-footer-center {
+      display: table-cell;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888880;
+      text-align: center;
+    }
+
+    /* ══ PÁGINA 1 ══ */
+    .page1 {
+      page: page1-type;
+      width: 108mm;
+      height: 192mm;
+      overflow: hidden;
+      page-break-after: always;
+      position: relative;
+      background: #fff;
+    }
+    .p1-image {
+      width: 108mm; height: 144mm;
+      position: relative; overflow: hidden; background: #fff;
+    }
+    .p1-image img {
+      width: 108mm; height: 144mm;
+      object-fit: cover; object-position: top center;
+      display: block; background: #fff;
+    }
+    .p1-image-placeholder {
+      width: 108mm; height: 144mm;
+      background: linear-gradient(160deg,#2a2218 0%,#111110 100%);
+      display:flex; align-items:center; justify-content:center; font-size:28pt;
+    }
+    .p1-image-gradient {
+      position:absolute; bottom:0; left:0; right:0; height:50mm;
+      background:linear-gradient(to bottom,transparent 0%,rgba(17,17,16,0.92) 100%);
+    }
+    .p1-name-block {
+      position:absolute; bottom:0; left:0; right:0; padding:0 5mm 3mm;
+    }
+    .wc-mark { color:#c0392b; }
+    .p1-name {
+      font-family:'Cinzel',serif; font-size:14pt; font-weight:700;
+      color:#fff; line-height:1.1; margin-bottom:0.5mm;
+    }
+    .p1-type {
+      font-family:'Rajdhani',sans-serif; font-size:6pt; font-weight:600;
+      letter-spacing:0.15em; text-transform:uppercase; color:#c0392b;
+    }
+    .p1-body {
+      padding:3mm 5mm 0; height:40mm; overflow:hidden;
+    }
+    .p1-concept {
+      font-family:'EB Garamond',serif; font-size:9pt; font-weight:600;
+      font-style:italic; color:#111110; margin-bottom:2mm; line-height:1.3;
+    }
+    .p1-desc {
+      font-family:'EB Garamond',serif; font-size:8pt; color:#444440; line-height:1.5;
+    }
+    /* footer de la p1 — dentro del HTML, posición absoluta */
+    .p1-footer {
+      position:absolute; bottom:0; left:0; right:0;
+      height:7mm; display:table;
+      width:108mm;
+    }
+    .p1-footer-inner {
+      display:table; width:98mm; margin:0 5mm;
+      border-top:1.5pt solid #111110; padding-top:1.5mm;
+    }
+    .p1-footer-l, .p1-footer-r {
+      display:table-cell;
+      font-family:'Rajdhani',sans-serif; font-size:5pt; font-weight:600;
+      letter-spacing:0.12em; text-transform:uppercase; color:#888880;
+      vertical-align:top;
+    }
+    .p1-footer-r { text-align:right; }
+
+    /* ══ PÁGINAS 2+: tabla de una sola columna, thead se repite ══ */
+    .page-content {
+      page-break-before: always;
+    }
+    .creature-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .creature-table thead th {
+      background: #111110;
+      border-bottom: 1.5pt solid #8b2010;
+      padding: 2.5mm 5mm;
+      text-align: left;
+    }
+    .th-name {
+      font-family:'Cinzel',serif; font-size:9pt; font-weight:700; color:#fff;
+    }
+    .th-name .wc-mark { color:#c0392b; }
+    .th-cont {
+      font-family:'Rajdhani',sans-serif; font-size:5.5pt; font-weight:600;
+      letter-spacing:0.15em; text-transform:uppercase; color:#666;
+      margin-left:3mm;
+    }
+    .creature-table tbody td {
+      padding: 3mm 5mm 4mm;
+      vertical-align: top;
+    }
+    .p2-body {
+      /* usado dentro del td */
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display:table; width:100%;
+      border-collapse:collapse; border:0.5pt solid #d8d8d4;
+      margin-bottom:2.5mm;
+    }
+    .stats-row { display:table-row; }
+    .stat-cell {
+      display:table-cell; width:25%;
+      padding:1.2mm 1mm; text-align:center;
+      border-right:0.5pt solid #d8d8d4; vertical-align:middle;
+    }
+    .stat-cell:last-child { border-right:none; }
+    .stat-cell-label {
+      font-family:'Rajdhani',sans-serif; font-size:5pt; font-weight:600;
+      letter-spacing:0.08em; text-transform:uppercase; color:#888880; display:block;
+    }
+    .stat-cell-val {
+      font-family:'Cinzel',serif; font-size:8pt; font-weight:700;
+      color:#111110; display:block; line-height:1.2;
+    }
+    .stat-cell-sub {
+      font-family:'Rajdhani',sans-serif; font-size:5pt; font-weight:600;
+      letter-spacing:0.06em; text-transform:uppercase; color:#8b2010; display:block;
+    }
+
+    /* ── Atributos ── */
+    .attrs-grid {
+      display:table; width:100%;
+      border-collapse:collapse; border:0.5pt solid #d8d8d4;
+    }
+    .attrs-row { display:table-row; }
+    .attr-cell {
+      display:table-cell; width:20%;
+      padding:1mm 0.5mm; text-align:center;
+      border-right:0.5pt solid #d8d8d4; vertical-align:middle;
+    }
+    .attr-cell:last-child { border-right:none; }
+    .attr-cell-label {
+      font-family:'Rajdhani',sans-serif; font-size:5pt; font-weight:600;
+      letter-spacing:0.08em; text-transform:uppercase; color:#888880; display:block;
+    }
+    .attr-cell-val {
+      font-family:'EB Garamond',serif; font-size:8.5pt; font-weight:600;
+      color:#111110; display:block;
+    }
+
+    /* ── Bloques ── */
+    .data-block { margin-bottom:2.5mm; page-break-inside:avoid; }
+    .data-block-splittable { page-break-inside:auto; }
+    .data-block-label {
+      font-family:'Rajdhani',sans-serif; font-size:5.5pt; font-weight:700;
+      letter-spacing:0.18em; text-transform:uppercase; color:#8b2010;
+      border-bottom:0.5pt solid #d8d8d4; padding-bottom:0.5mm;
+      margin-bottom:0.8mm; page-break-after:avoid;
+    }
+    .ornamento {
+      font-family:'EB Garamond',serif; font-size:7pt; font-weight:400;
+      letter-spacing:0; text-transform:none; color:#888880; font-style:italic;
+    }
+    .data-block-content {
+      font-family:'EB Garamond',serif; font-size:8pt; color:#111110; line-height:1.5;
+    }
+
+    /* ── Habilidades especiales ── */
+    .special-ability { margin-bottom:1.5mm; page-break-inside:avoid; }
+    .special-ability:last-child { margin-bottom:0; }
+    .special-ability-name {
+      font-family:'Cinzel',serif; font-size:7.5pt; font-weight:600; color:#111110;
+    }
+    .special-ability-desc {
+      font-family:'EB Garamond',serif; font-size:7.5pt; color:#444440; line-height:1.5;
+    }
+  </style>
+</head>
+<body>
+
+{% for creature in creatures %}
+{% set c = creature.data %}
+
+{# running footer — WeasyPrint lo pone en @bottom-center de todas las páginas 2+ #}
+<div class="running-footer">
+  <span class="running-footer-l">Savage Worlds</span>
+  {% if view_name %}<span class="running-footer-r">{{ view_name }}</span>{% endif %}
+</div>
+
+{# ════════ PÁGINA 1 ════════ #}
+<div class="page1">
+  <div class="p1-image">
+    {% if creature.image_url %}
+      <img src="{{ creature.image_url }}" alt="{{ c.name }}">
+    {% else %}
+      <div class="p1-image-placeholder">🐉</div>
+    {% endif %}
+    <div class="p1-image-gradient"></div>
+    <div class="p1-name-block">
+      <div class="p1-name">{% if c.wild_card %}<span class="wc-mark">♠</span> {% endif %}{{ c.name }}</div>
+      {% if c.type %}<div class="p1-type">{{ c.type }}</div>{% endif %}
+    </div>
+  </div>
+  <div class="p1-body">
+    {% if c.concept %}<div class="p1-concept">{{ c.concept }}</div>{% endif %}
+    {% if c.description %}<div class="p1-desc">{{ c.description }}</div>{% endif %}
+  </div>
+  <div class="p1-footer">
+    <div class="p1-footer-inner">
+      <span class="p1-footer-l">Savage Worlds</span>
+      {% if view_name %}<span class="p1-footer-r">{{ view_name }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+
+{# ════════ PÁGINAS 2+: tabla 1 columna, thead repetible ════════ #}
+<div class="page-content">
+  <table class="creature-table">
+    <thead><tr><th><span class="th-name">{% if c.wild_card %}<span class="wc-mark">♠</span> {% endif %}{{ c.name }}</span><span class="th-cont">continuación</span></th></tr></thead>
+    <tbody><tr><td>
+    <div class="p2-body">
+
+        <div class="stats-grid">
+          <div class="stats-row">
+            <div class="stat-cell"><span class="stat-cell-label">Paso</span><span class="stat-cell-val">{{ c.pace }}</span></div>
+            <div class="stat-cell"><span class="stat-cell-label">Parada</span><span class="stat-cell-val">{{ c.parry }}{% if c.parry_variant %} ({{ c.parry + c.parry_variant.value }}){% endif %}</span></div>
+            <div class="stat-cell"><span class="stat-cell-label">Dureza</span><span class="stat-cell-val">{{ c.toughness }}{% if c.toughness_variant %} ({{ c.toughness + c.toughness_variant.value }}){% endif %}</span></div>
+            <div class="stat-cell"><span class="stat-cell-label">Tamaño</span><span class="stat-cell-val">{{ c.size }}</span></div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-cell">{% if c.pace_variant %}<span class="stat-cell-sub">{% for pv in c.pace_variant %}{{ pv.type }} {{ pv.value }}{% if not loop.last %} · {% endif %}{% endfor %}</span>{% endif %}</div>
+            <div class="stat-cell">{% if c.parry_variant %}<span class="stat-cell-sub">{{ c.parry_variant.type }}</span>{% endif %}</div>
+            <div class="stat-cell">{% if c.toughness_variant %}<span class="stat-cell-sub">{{ c.toughness_variant.type }}</span>{% endif %}</div>
+            <div class="stat-cell">{% if c.wounds is not none and c.wounds != '' and c.wounds|int > 0 %}<span class="stat-cell-sub">Heridas {{ c.wounds }}</span>{% endif %}</div>
+          </div>
+        </div>
+
+        <div class="data-block">
+          <div class="data-block-label">Atributos</div>
+          <div class="attrs-grid"><div class="attrs-row">
+            <div class="attr-cell"><span class="attr-cell-label">Agi</span><span class="attr-cell-val">{{ c.attributes.agility }}</span></div>
+            <div class="attr-cell"><span class="attr-cell-label">Ast</span><span class="attr-cell-val">{{ c.attributes.smarts }}</span></div>
+            <div class="attr-cell"><span class="attr-cell-label">Esp</span><span class="attr-cell-val">{{ c.attributes.spirit }}</span></div>
+            <div class="attr-cell"><span class="attr-cell-label">Fue</span><span class="attr-cell-val">{{ c.attributes.strength }}</span></div>
+            <div class="attr-cell"><span class="attr-cell-label">Vig</span><span class="attr-cell-val">{{ c.attributes.vigor }}</span></div>
+          </div></div>
+        </div>
+
+        {% set skills_with_value = c.skills | selectattr('value') | list %}
+        {% if skills_with_value %}
+        <div class="data-block">
+          <div class="data-block-label">Habilidades</div>
+          <div class="data-block-content">{% for sk in skills_with_value %}{{ sk.name }} {{ sk.value }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
+        </div>
+        {% endif %}
+
+        {% if c.edges %}
+        <div class="data-block">
+          <div class="data-block-label">Ventajas</div>
+          <div class="data-block-content">{{ c.edges | join(', ') }}</div>
+        </div>
+        {% endif %}
+
+        {% if c.hindrances %}
+        <div class="data-block">
+          <div class="data-block-label">Desventajas</div>
+          <div class="data-block-content">{{ c.hindrances | join(', ') }}</div>
+        </div>
+        {% endif %}
+
+        {% if c.powers %}
+        <div class="data-block">
+          <div class="data-block-label">Poderes{% if c.power_points %} ({{ c.power_points }} PP){% endif %}{% if c.power_trapping %}<span class="ornamento"> — {{ c.power_trapping }}</span>{% endif %}</div>
+          <div class="data-block-content">{{ c.powers | map(attribute='name') | join(', ') }}</div>
+        </div>
+        {% endif %}
+
+        {% if c.gear %}
+        <div class="data-block">
+          <div class="data-block-label">Equipo</div>
+          <div class="data-block-content">{% for g in c.gear %}{{ g.item }}{% if g.notes %} ({{ g.notes }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</div>
+        </div>
+        {% endif %}
+
+        {% if c.special_abilities %}
+        <div class="data-block data-block-splittable">
+          <div class="data-block-label">Habilidades especiales</div>
+          {% for sa in c.special_abilities %}
+          <div class="special-ability">
+            <span class="special-ability-name">{{ sa.name }}. </span><span class="special-ability-desc">{{ sa.description }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+    </td></tr></tbody>
+  </table>
+</div>
+
+{% endfor %}
+</body>
+</html>

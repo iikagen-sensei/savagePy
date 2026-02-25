@@ -1,0 +1,84 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Bestiario · Savage Worlds{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Criaturas y enemigos</div>
+    <h1>Mazmorra<br>de <strong>bestias</strong></h1>
+  </div>
+</div>
+
+<main class="sw-main">
+  <div class="list-head">
+    <span class="list-head-title">{{ creatures|length }} criatura{{ 's' if creatures|length != 1 }}</span>
+    <a href="/bestiary/new" class="btn btn-solid">+ Nueva criatura</a>
+  </div>
+
+  {% if creatures %}
+  <div class="chars-grid">
+    {% for creature in creatures %}
+    {% set cid = creature.id|default(creature.Id) %}
+    {% set is_wc = creature.wild_card or (creature.data and creature.data.wild_card) %}
+    <div class="char-card{% if is_wc %} wildcard{% endif %}">
+      <div class="char-card-img">
+        {% if creature.image_url %}
+          <img src="{{ creature.image_url }}" alt="{{ creature.name }}">
+        {% else %}
+          <div class="char-card-placeholder">🐉</div>
+        {% endif %}
+        <div class="char-card-overlay">
+          <div class="char-card-name">{% if is_wc %}♠ {% endif %}{{ creature.name }}</div>
+        </div>
+      </div>
+      <div class="char-card-body">
+        <div class="char-card-concept">
+          {% if creature.data and creature.data.type %}
+            <span style="font-family:'Rajdhani',sans-serif;font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);">{{ creature.data.type }}</span><br>
+          {% endif %}
+          {{ creature.data.concept if creature.data and creature.data.concept else '—' }}
+        </div>
+        <div class="char-card-actions">
+          <a href="/bestiary/{{ cid }}/edit" class="btn btn-outline">Editar</a>
+          <button class="btn btn-red btn-del" onclick="confirmDelete({{ cid }}, '{{ creature.name }}')">✕</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:4rem 2rem; color:var(--muted);">
+    <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🐉</div>
+    <div style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:0.5rem;">Sin criaturas todavía</div>
+    <div style="font-style:italic; margin-bottom:1.5rem;">Añade la primera criatura a tu bestiario.</div>
+    <a href="/bestiary/new" class="btn btn-solid">+ Nueva criatura</a>
+  </div>
+  {% endif %}
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Eliminar criatura</h3>
+    <p id="modalMsg">¿Seguro que quieres eliminar esta criatura?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <form id="deleteForm" method="POST" style="display:inline">
+        <button type="submit" class="btn btn-red">Eliminar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function confirmDelete(id, name) {
+    document.getElementById('modalMsg').textContent = '¿Seguro que quieres eliminar a ' + name + '? Esta acción no se puede deshacer.';
+    document.getElementById('deleteForm').action = '/bestiary/' + id + '/delete';
+    document.getElementById('modalBg').classList.add('active');
+  }
+  function closeModal() { document.getElementById('modalBg').classList.remove('active'); }
+  document.getElementById('modalBg').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+</script>
+{% endblock %}

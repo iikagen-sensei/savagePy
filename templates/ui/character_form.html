@@ -1,0 +1,759 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Savage Worlds · {{ 'Editar' if record_id else 'Nuevo' }} Personaje{% endblock %}
+
+{% block header_extra %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Hoja de personaje</div>
+    <h1>{{ 'Editar' if record_id else 'Nuevo' }} <strong>personaje<br>de campaña</strong></h1>
+  </div>
+</div>
+<div class="save-bar">
+  <span class="save-bar-title">{{ 'Editando: ' + character.name if character and character.name else 'Nuevo personaje' }}</span>
+  <div class="save-bar-actions">
+    <a class="btn btn-ghost" href="/characters">← Volver</a>
+    <button class="btn btn-solid" onclick="saveCharacter()">Guardar</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-txt">Cargando datos...</div>
+</div>
+
+
+<form id="charForm" action="/characters/save" method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="record_id" value="{{ record_id or '' }}">
+  <input type="hidden" name="character_json" id="characterJson">
+  <input type="file" name="image" id="imageFileInput" accept="image/*" style="display:none">
+
+<div class="form-layout">
+
+  <!-- ── SECCIONES IZQUIERDA ── -->
+  <div class="form-sections">
+
+    <!-- DATOS BÁSICOS (moved to sidebar) -->
+    <!-- placeholder removed from main, original markup moved below -->
+
+    <!-- ATRIBUTOS -->
+    <div class="section">
+      <div class="section-header form-section-head">Atributos</div>
+      <div class="section-body">
+        <div class="attributes-grid">
+          <div class="attr-field">
+            <span class="attr-label">Agilidad</span>
+            <select class="attr-select" id="attr-agility">
+              <option value="d4">d4</option><option value="d6">d6</option>
+              <option value="d8">d8</option><option value="d10">d10</option>
+              <option value="d12">d12</option>
+            </select>
+          </div>
+          <div class="attr-field">
+            <span class="attr-label">Astucia</span>
+            <select class="attr-select" id="attr-smarts">
+              <option value="d4">d4</option><option value="d6">d6</option>
+              <option value="d8">d8</option><option value="d10">d10</option>
+              <option value="d12">d12</option>
+            </select>
+          </div>
+          <div class="attr-field">
+            <span class="attr-label">Espíritu</span>
+            <select class="attr-select" id="attr-spirit">
+              <option value="d4">d4</option><option value="d6">d6</option>
+              <option value="d8">d8</option><option value="d10">d10</option>
+              <option value="d12">d12</option>
+            </select>
+          </div>
+          <div class="attr-field">
+            <span class="attr-label">Fuerza</span>
+            <select class="attr-select" id="attr-strength">
+              <option value="d4">d4</option><option value="d6">d6</option>
+              <option value="d8">d8</option><option value="d10">d10</option>
+              <option value="d12">d12</option>
+            </select>
+          </div>
+          <div class="attr-field">
+            <span class="attr-label">Vigor</span>
+            <select class="attr-select" id="attr-vigor">
+              <option value="d4">d4</option><option value="d6">d6</option>
+              <option value="d8">d8</option><option value="d10">d10</option>
+              <option value="d12">d12</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HABILIDADES -->
+    <div class="section">
+      <div class="section-header form-section-head">Habilidades</div>
+      <div class="section-body">
+        <div class="skills-grid" id="skillsGrid">
+          <!-- Generado por JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- VENTAJAS -->
+    <div class="section">
+      <div class="section-header form-section-head">Ventajas</div>
+      <div class="section-body">
+        <div class="dynamic-list" id="edgesList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="edgeSearch" placeholder="Buscar ventaja..." oninput="filterAutocomplete('edge')" onfocus="showAutocomplete('edge')" onblur="hideAutocomplete('edge', 300)">
+          <div class="autocomplete-dropdown" id="edgeDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESVENTAJAS -->
+    <div class="section">
+      <div class="section-header form-section-head">Desventajas</div>
+      <div class="section-body">
+        <div class="dynamic-list" id="hindrancesList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="hindranceSearch" placeholder="Buscar desventaja..." oninput="filterAutocomplete('hindrance')" onfocus="showAutocomplete('hindrance')" onblur="hideAutocomplete('hindrance', 300)">
+          <div class="autocomplete-dropdown" id="hindranceDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PODERES -->
+    <div class="section">
+      <div class="section-header form-section-head">Poderes</div>
+      <div class="section-body">
+        <div class="field-row" style="margin-bottom:0.8rem">
+          <div class="field" style="max-width:120px">
+            <label>Puntos de poder</label>
+            <input type="text" id="powerPoints" placeholder="0">
+          </div>
+        </div>
+        <div class="dynamic-list" id="powersList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="powerSearch" placeholder="Buscar poder..." oninput="filterAutocomplete('power')" onfocus="showAutocomplete('power')" onblur="hideAutocomplete('power', 300)">
+          <div class="autocomplete-dropdown" id="powerDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVANCES -->
+    <div class="section">
+      <div class="section-header form-section-head">Avances</div>
+      <div class="section-body" id="advancesBody">
+        <!-- Generado por JS por rango -->
+      </div>
+    </div>
+
+    <!-- EQUIPO POR RANGO -->
+    <div class="section">
+      <div class="section-header form-section-head">Equipo por rango</div>
+      <div class="section-body" id="gearBody">
+        <!-- Generado por JS por rango -->
+      </div>
+    </div>
+
+    <!-- NOTAS ESPECIALES -->
+    <div class="section">
+      <div class="section-header form-section-head">Notas especiales</div>
+      <div class="section-body">
+        <div class="special-grid">
+          {% for rank in ['Novato', 'Experimentado', 'Veterano', 'Heroico', 'Legendario'] %}
+          <div class="special-rank">
+            <span class="special-rank-label">{{ rank }}</span>
+            <textarea id="special-{{ rank }}" placeholder="Notas para {{ rank }}..."></textarea>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /form-sections -->
+
+  <!-- ── SIDEBAR ── -->
+  <div class="form-sidebar">
+
+    <!-- DATOS BÁSICOS -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Datos básicos</div>
+      <div class="sidebar-panel-body">
+        <div class="field-row cols-1">
+          <div class="field">
+            <label>Nombre</label>
+            <input type="text" id="charName" placeholder="Nombre del personaje">
+          </div>
+          <div class="field">
+            <label>Concepto</label>
+            <input type="text" id="charConcept" placeholder="Ej: Bárbara berserker">
+          </div>
+        </div>
+        <div class="field-row cols-1">
+          <div class="field">
+            <label>Ancestría</label>
+            <select id="ancestrySelect" onchange="onAncestryChange()">
+              <option value="">— Elige ancestría —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Rasgos de ancestría</label>
+            <input type="text" id="ancestryTraits" readonly style="color:var(--text-dim);cursor:default">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Imagen -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Imagen</div>
+      <div class="sidebar-panel-body">
+        <div class="image-preview" id="imagePreview">
+          <img id="imagePreviewImg" alt="Personaje">
+          <div class="image-placeholder" id="imagePlaceholder">Sin imagen</div>
+        </div>
+        <div class="image-drop-zone" onclick="document.getElementById('imageFileInput').click()">
+          <label class="image-drop-label">📁 Seleccionar imagen</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Descripción -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Historia del personaje</div>
+      <div class="sidebar-panel-body">
+        <textarea class="desc-textarea" id="charDescription" placeholder="Trasfondo, personalidad, motivaciones..."></textarea>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /form-layout -->
+</form>
+
+<script>
+// ── Datos del servidor ──────────────────────────────────────────
+const RANKS = ['Novato', 'Experimentado', 'Veterano', 'Heroico', 'Legendario'];
+const DICE  = ['', 'd4', 'd6', 'd8', 'd10', 'd12'];
+
+// Datos iniciales desde Jinja2 (personaje existente o null)
+const INITIAL = {{ (character | tojson) if character else 'null' }};
+const IMAGE_URL = {{ (image_url | tojson) if image_url else 'null' }};
+
+// Datos cargados desde la API
+let DB = { skills:[], edges:[], hindrances:[], powers:[], ancestries:[] };
+// Estado del formulario
+let state = {
+  edges: [],      // [{name}]
+  hindrances: [], // [{name, type, detail}]
+  powers: [],     // [{name}]
+  advances: {},   // {Novato: [{order, description}], ...}
+  gear: {},       // {Novato: [{item, notes}], ...}
+};
+RANKS.forEach(r => { state.advances[r] = []; state.gear[r] = []; });
+
+// ── Inicialización ──────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/form-data');
+    const data = await res.json();
+    DB = data;
+    buildSkillsGrid();
+    buildAdvancesSection();
+    buildGearSection();
+    populateAncestries();
+    buildAutocomplete('edge');
+    buildAutocomplete('hindrance');
+    buildAutocomplete('power');
+    if (INITIAL) loadExisting();
+    if (IMAGE_URL) showImageUrl(IMAGE_URL);
+    // Enable collapsible sections after content built
+    makeSectionsCollapsible();
+  } catch(e) {
+    console.error('Error cargando datos:', e);
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+// ── Cargar personaje existente ──────────────────────────────────
+function loadExisting() {
+  const c = INITIAL;
+  document.getElementById('charName').value        = c.name || '';
+  document.getElementById('charConcept').value     = c.concept || '';
+  document.getElementById('charDescription').value = c.description || '';
+  document.getElementById('powerPoints').value     = c.power_points || '';
+
+  // Atributos
+  const attrs = c.attributes || {};
+  ['agility','smarts','spirit','strength','vigor'].forEach(a => {
+    const el = document.getElementById('attr-' + a);
+    if (el && attrs[a]) el.value = attrs[a];
+  });
+
+  // Ancestría
+  if (c.ancestry) {
+    const sel = document.getElementById('ancestrySelect');
+    // Buscar por nombre
+    const opt = [...sel.options].find(o => o.text === c.ancestry.name);
+    if (opt) { sel.value = opt.value; onAncestryChange(); }
+    else {
+      // Si no está aún cargado, esperar y reintentar
+      setTimeout(() => {
+        const opt2 = [...sel.options].find(o => o.text === c.ancestry.name);
+        if (opt2) { sel.value = opt2.value; onAncestryChange(); }
+      }, 500);
+    }
+  }
+
+  // Habilidades
+  if (c.skills) {
+    c.skills.forEach(sk => {
+      const el = document.getElementById('skill-' + sk.name);
+      if (el) el.value = sk.value || '';
+    });
+  }
+
+  // Ventajas
+  (c.edges || []).forEach(name => addEdge(name));
+
+  // Desventajas — parsear "Nombre (Tipo) [Detalle]"
+  (c.hindrances || []).forEach(h => {
+    const m = h.match(/^(.+?)\s*\((\w+)\)(?:\s*\[(.+)\])?$/);
+    if (m) addHindrance(m[1].trim(), m[2], m[3] || '');
+    else addHindrance(h, '', '');
+  });
+
+  // Poderes
+  (c.powers || []).forEach(p => addPower(p.name));
+
+  // Avances — limpiar slots vacíos creados por buildAdvancesSection y cargar los del personaje
+  RANKS.forEach(r => { state.advances[r] = []; });
+  (c.advances || []).forEach(adv => {
+    if (state.advances[adv.rank] !== undefined) {
+      state.advances[adv.rank].push({ order: adv.order, description: adv.description });
+    }
+  });
+  // Rellenar hasta el conteo correcto si faltan slots
+  RANKS.forEach(r => {
+    const count = ADVANCES_PER_RANK[r];
+    const offset = RANKS.slice(0, RANKS.indexOf(r)).reduce((s,rr) => s + ADVANCES_PER_RANK[rr], 1);
+    while (state.advances[r].length < count) {
+      state.advances[r].push({ order: offset + state.advances[r].length, description: '' });
+    }
+  });
+  renderAllAdvances();
+
+  // Equipo
+  const gear = c.gear_by_rank || {};
+  RANKS.forEach(r => {
+    (gear[r] || []).forEach(item => {
+      state.gear[r].push({ item: item.item, notes: item.notes || '' });
+    });
+  });
+  renderAllGear();
+
+  // Notas especiales
+  const special = c.special || {};
+  RANKS.forEach(r => {
+    const el = document.getElementById('special-' + r);
+    if (el) el.value = special[r] || '';
+  });
+}
+
+// ── Habilidades ─────────────────────────────────────────────────
+function buildSkillsGrid() {
+  const grid = document.getElementById('skillsGrid');
+  // Orden viene de la vista NocoDB, no reordenamos
+  grid.innerHTML = DB.skills.map(sk => {
+    const isCore = !!(sk.is_core || sk.is_core === 1);
+    const skName = sk.name || sk.Name || '';
+    return `<div class="skill-row">
+      <span class="skill-name ${isCore?'core':''}">${skName}</span>
+      <select class="skill-select" id="skill-${skName}">
+        ${DICE.map(d => `<option value="${d}" ${isCore && d==='d4' ? 'selected' : ''}>${d || '—'}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+// ── Ancestría ───────────────────────────────────────────────────
+function populateAncestries() {
+  const sel = document.getElementById('ancestrySelect');
+  DB.ancestries.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.Id;
+    opt.textContent = a.name;
+    opt.dataset.traits = JSON.stringify(a.traits || []);
+    sel.appendChild(opt);
+  });
+}
+
+function onAncestryChange() {
+  const sel = document.getElementById('ancestrySelect');
+  const opt = sel.options[sel.selectedIndex];
+  const traits = opt ? JSON.parse(opt.dataset.traits || '[]') : [];
+  document.getElementById('ancestryTraits').value = traits.join(', ');
+}
+
+// ── Autocomplete genérico ───────────────────────────────────────
+const _acCache = {};
+
+function buildAutocomplete(type) {
+  const map = { edge:'edges', hindrance:'hindrances', power:'powers' };
+  _acCache[type] = DB[map[type]] || [];
+  _renderDropdown(type, _acCache[type]);
+
+  const drop = document.getElementById(type + 'Dropdown');
+  drop.addEventListener('mousedown', function(e) {
+    const el = e.target.closest('.ac-item');
+    if (!el) return;
+    e.preventDefault();
+    const idx  = parseInt(el.dataset.acIdx);
+    const item = (_acCache[type + '_filtered'] || [])[idx];
+    if (!item) return;
+    const name = item.name || item.Nombre || item.Name || '';
+    document.getElementById(type + 'Search').value = '';
+    drop.style.display = 'none';
+    if (type === 'edge')      addEdge(name);
+    if (type === 'hindrance') addHindranceFromDB(name);
+    if (type === 'power')     addPower(name);
+  });
+}
+
+function _normalize(s) {
+  return (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function _renderDropdown(type, items, isFiltered=false) {
+  const drop = document.getElementById(type + 'Dropdown');
+  const limit = isFiltered ? 120 : 20;
+  const visible = items.slice(0, limit);
+  _acCache[type + '_filtered'] = visible;
+  drop.innerHTML = visible.map((item, idx) => {
+    const name = item.name || item.Nombre || item.Name || '';
+    let meta = '';
+    if (type === 'edge') {
+      const parts = [item.rank_name, item.type].filter(Boolean);
+      meta = parts.join(' · ');
+    } else if (type === 'power') {
+      meta = item.rank_name || '';
+    }
+    return '<div class="ac-item" data-ac-idx="' + idx + '">' +
+      '<span class="ac-item-name">' + escHtml(name) + '</span>' +
+      (meta ? '<span class="ac-item-meta">' + escHtml(meta) + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function filterAutocomplete(type) {
+  const q = _normalize(document.getElementById(type + 'Search').value);
+  const all = _acCache[type] || [];
+  const filtered = q ? all.filter(i => _normalize(i.name||i.Nombre||'').includes(q)) : all;
+  _renderDropdown(type, filtered, !!q);
+  document.getElementById(type + 'Dropdown').style.display = 'block';
+}
+
+function showAutocomplete(type) {
+  _renderDropdown(type, _acCache[type] || [], false);
+  document.getElementById(type + 'Dropdown').style.display = 'block';
+}
+
+function hideAutocomplete(type, delay) {
+  setTimeout(() => {
+    document.getElementById(type + 'Dropdown').style.display = 'none';
+  }, delay);
+}
+
+// ── Ventajas ────────────────────────────────────────────────────
+function addEdge(name) {
+  state.edges.push({ name });
+  renderEdges();
+}
+
+function removeEdge(idx) {
+  state.edges.splice(idx, 1);
+  renderEdges();
+}
+
+function renderEdges() {
+  const list = document.getElementById('edgesList');
+  list.innerHTML = state.edges.map((e, i) => `
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(e.name)}"
+             oninput="state.edges[${i}].name = this.value">
+      <button class="btn-remove" type="button" onclick="removeEdge(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Desventajas ─────────────────────────────────────────────────
+function addHindranceFromDB(name) {
+  // Buscar en DB para saber los tipos disponibles
+  const h = DB.hindrances.find(h => (h.name || h.Nombre) === name);
+  const type = h ? (h.type || '') : '';
+  // Si tiene ambos tipos, dejar vacío para que el usuario elija
+  const defaultType = (type === 'Major' || type === 'Mayor') ? 'Mayor'
+                    : (type === 'Minor' || type === 'Menor') ? 'Menor' : '';
+  addHindrance(name, defaultType, '');
+}
+
+function addHindrance(name, type, detail) {
+  state.hindrances.push({ name, type: type || '', detail: detail || '' });
+  renderHindrances();
+}
+
+function removeHindrance(idx) {
+  state.hindrances.splice(idx, 1);
+  renderHindrances();
+}
+
+function renderHindrances() {
+  const list = document.getElementById('hindrancesList');
+  list.innerHTML = state.hindrances.map((h, i) => `
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(h.name)}"
+             oninput="state.hindrances[${i}].name = this.value" placeholder="Desventaja">
+      <select class="w80" onchange="state.hindrances[${i}].type = this.value">
+        <option value="" ${!h.type ? 'selected':''}>—</option>
+        <option value="Mayor" ${h.type==='Mayor'?'selected':''}>Mayor</option>
+        <option value="Menor" ${h.type==='Menor'?'selected':''}>Menor</option>
+      </select>
+      <input type="text" class="flex1" value="${escHtml(h.detail)}"
+             oninput="state.hindrances[${i}].detail = this.value" placeholder="[detalle]">
+      <button class="btn-remove" type="button" onclick="removeHindrance(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Poderes ─────────────────────────────────────────────────────
+function addPower(name) {
+  state.powers.push({ name });
+  renderPowers();
+}
+
+function removePower(idx) {
+  state.powers.splice(idx, 1);
+  renderPowers();
+}
+
+function renderPowers() {
+  const list = document.getElementById('powersList');
+  list.innerHTML = state.powers.map((p, i) => `
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(p.name)}"
+             oninput="state.powers[${i}].name = this.value">
+      <button class="btn-remove" type="button" onclick="removePower(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Avances ─────────────────────────────────────────────────────
+const ADVANCES_PER_RANK = { 'Novato':3, 'Experimentado':4, 'Veterano':4, 'Heroico':4, 'Legendario':5 };
+
+function buildAdvancesSection() {
+  const body = document.getElementById('advancesBody');
+  body.innerHTML = RANKS.map(r => `
+    <div class="advances-rank-block">
+      <div class="advances-rank-label">${r}</div>
+      <div class="dynamic-list" id="advances-${r}"></div>
+    </div>`).join('');
+  // Inicializar slots vacíos por rango
+  RANKS.forEach(r => {
+    const count = ADVANCES_PER_RANK[r];
+    const offset = RANKS.slice(0, RANKS.indexOf(r)).reduce((s,rr) => s + ADVANCES_PER_RANK[rr], 1);
+    while (state.advances[r].length < count) {
+      state.advances[r].push({ order: offset + state.advances[r].length, description: '' });
+    }
+  });
+  // Renderizar inmediatamente
+  RANKS.forEach(r => renderAdvances(r));
+}
+
+function renderAdvances(rank) {
+  const list = document.getElementById('advances-' + rank);
+  const offset = RANKS.slice(0, RANKS.indexOf(rank)).reduce((s,r) => s + ADVANCES_PER_RANK[r], 1);
+  list.innerHTML = state.advances[rank].map((a, i) => `
+    <div class="dynamic-row">
+      <span style="width:24px;text-align:center;color:var(--gold-dim);font-family:'Cinzel',serif;font-size:0.75rem;flex-shrink:0;padding-top:0.45rem">${offset + i}</span>
+      <input type="text" class="flex1" value="${escHtml(a.description)}"
+             oninput="state.advances['${rank}'][${i}].description = this.value"
+             placeholder="Descripción del avance">
+    </div>`).join('');
+}
+
+function renderAllAdvances() {
+  RANKS.forEach(r => renderAdvances(r));
+}
+
+// ── Equipo ───────────────────────────────────────────────────────
+function buildGearSection() {
+  const body = document.getElementById('gearBody');
+  body.innerHTML = RANKS.map(r => `
+    <div class="gear-rank-block">
+      <div class="gear-rank-label">${r}</div>
+      <div class="dynamic-list" id="gear-${r}"></div>
+      <button class="btn-add" type="button" onclick="addGear('${r}')">+ Añadir objeto</button>
+    </div>`).join('');
+}
+
+function addGear(rank) {
+  state.gear[rank].push({ item: '', notes: '' });
+  renderGear(rank);
+}
+
+function removeGear(rank, idx) {
+  state.gear[rank].splice(idx, 1);
+  renderGear(rank);
+}
+
+function renderGear(rank) {
+  const list = document.getElementById('gear-' + rank);
+  list.innerHTML = state.gear[rank].map((g, i) => `
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(g.item)}"
+             oninput="state.gear['${rank}'][${i}].item = this.value"
+             placeholder="Nombre del objeto">
+      <input type="text" class="flex1" value="${escHtml(g.notes)}"
+             oninput="state.gear['${rank}'][${i}].notes = this.value"
+             placeholder="Notas">
+      <button class="btn-remove" type="button" onclick="removeGear('${rank}', ${i})">✕</button>
+    </div>`).join('');
+}
+
+function renderAllGear() {
+  RANKS.forEach(r => renderGear(r));
+}
+
+// ── Imagen ───────────────────────────────────────────────────────
+document.getElementById('imageFileInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => showImageUrl(e.target.result);
+  reader.readAsDataURL(file);
+  // Copiar al input real del form
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  document.querySelector('input[name="image"]').files = dt.files;
+});
+
+function showImageUrl(url) {
+  const img = document.getElementById('imagePreviewImg');
+  const ph  = document.getElementById('imagePlaceholder');
+  img.src = url;
+  img.style.display = 'block';
+  ph.style.display = 'none';
+}
+
+// ── Construir JSON y guardar ─────────────────────────────────────
+function buildCharacterJson() {
+  const ancestrySel = document.getElementById('ancestrySelect');
+  const ancestryOpt = ancestrySel.options[ancestrySel.selectedIndex];
+  const ancestryName = ancestryOpt ? ancestryOpt.text : '';
+  const ancestryTraits = ancestryOpt ? JSON.parse(ancestryOpt.dataset.traits || '[]') : [];
+
+  // Habilidades — solo las que tienen valor
+  const skills = DB.skills.map(sk => {
+    const name = sk.Name || sk.name;
+    const el = document.getElementById('skill-' + name);
+    return {
+      name,
+      value: el ? el.value : '',
+      is_core: !!(sk.is_core || sk.is_core === 1)
+    };
+  });
+
+  // Desventajas → formato "Nombre (Tipo) [Detalle]"
+  const hindrances = state.hindrances.map(h => {
+    let s = h.name;
+    if (h.type) s += ` (${h.type})`;
+    if (h.detail) s += ` [${h.detail}]`;
+    return s;
+  });
+
+  // Avances aplanados y ordenados
+  const advances = [];
+  RANKS.forEach(r => {
+    state.advances[r].forEach(a => {
+      advances.push({ order: a.order, rank: r, description: a.description });
+    });
+  });
+  advances.sort((a, b) => a.order - b.order);
+
+  // Equipo por rango
+  const gear_by_rank = {};
+  RANKS.forEach(r => { gear_by_rank[r] = state.gear[r].filter(g => g.item); });
+
+  // Notas especiales
+  const special = {};
+  RANKS.forEach(r => {
+    special[r] = document.getElementById('special-' + r)?.value || '';
+  });
+
+  const pp = parseInt(document.getElementById('powerPoints').value) || 0;
+
+  return {
+    name:        document.getElementById('charName').value,
+    concept:     document.getElementById('charConcept').value,
+    description: document.getElementById('charDescription').value,
+    ancestry: {
+      name:   ancestryName,
+      traits: ancestryTraits,
+    },
+    attributes: {
+      agility:  document.getElementById('attr-agility').value,
+      smarts:   document.getElementById('attr-smarts').value,
+      spirit:   document.getElementById('attr-spirit').value,
+      strength: document.getElementById('attr-strength').value,
+      vigor:    document.getElementById('attr-vigor').value,
+    },
+    edges:      state.edges.map(e => e.name),
+    hindrances,
+    skills,
+    powers:     state.powers.map(p => ({ name: p.name })),
+    power_points: pp,
+    gear_by_rank,
+    advances,
+    special,
+  };
+}
+
+function saveCharacter() {
+  const char = buildCharacterJson();
+  document.getElementById('characterJson').value = JSON.stringify(char);
+
+  // Adjuntar imagen: copiar el fichero del input real al del form si es necesario
+  const imgInput = document.getElementById('imageFileInput');
+  const formImg  = document.querySelector('input[name="image"]');
+  if (imgInput.files.length > 0 && formImg.files.length === 0) {
+    try {
+      const dt = new DataTransfer();
+      dt.items.add(imgInput.files[0]);
+      formImg.files = dt.files;
+    } catch(e) {
+      // DataTransfer no soportado — el file ya debería estar en formImg
+    }
+  }
+
+  document.getElementById('charForm').submit();
+}
+
+// ── Utils ────────────────────────────────────────────────────────
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Collapse behaviour ───────────────────────────────────────────
+function makeSectionsCollapsible(){
+  document.querySelectorAll('.section-header').forEach(h=>{
+    h.addEventListener('click',()=>{
+      const sec=h.closest('.section');
+      if(sec) sec.classList.toggle('collapsed');
+    });
+  });
+}
+
+// ── Arrancar ─────────────────────────────────────────────────────
+init();
+
+
+</script>
+{% endblock %}

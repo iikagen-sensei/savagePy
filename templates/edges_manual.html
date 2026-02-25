@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Compendio de Ventajas{% endblock %}
+
+{% block extra_styles %}
+<style>
+  body { background: #1a1f2e; padding: 2rem; font-family: 'Rajdhani', sans-serif; }
+
+  .book {
+    max-width: 860px;
+    margin: 0 auto;
+    background: #f0f4f8;
+    border: 2px solid #2d3a5c;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    padding: 3rem 3.5rem;
+  }
+
+  .book-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 3px double #2d3a5c;
+  }
+  .book-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #1a2540;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .book-subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.9rem;
+    color: #5a6a8a;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+
+  .category-section { margin-bottom: 2rem; }
+  .category-heading {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #f0f4f8;
+    background: #2d3a5c;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .edge-card {
+    background: white;
+    border: 1px solid #c8d4e8;
+    border-left: 4px solid #2d3a5c;
+    margin-bottom: 1rem;
+    padding: 1rem 1.2rem;
+    page-break-inside: avoid;
+  }
+
+  .edge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .edge-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1a2540;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .edge-name-original {
+    font-size: 0.82rem;
+    color: #5a6a8a;
+    font-style: italic;
+    margin-left: 0.4rem;
+    font-family: 'EB Garamond', serif;
+    text-transform: none;
+  }
+  .edge-source {
+    font-size: 0.75rem;
+    color: #8a9ab8;
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .edge-requirements {
+    font-size: 0.8rem;
+    color: #2d3a5c;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    padding: 0.2rem 0.6rem;
+    background: #e8eef8;
+    display: inline-block;
+  }
+  .edge-requirements::before { content: 'REQ: '; opacity: 0.6; }
+
+  .edge-description {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #2a2a2a;
+    text-align: justify;
+  }
+
+  .book-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 3px double #2d3a5c;
+    text-align: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    color: #5a6a8a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  @media print {
+    .book { box-shadow: none; max-width: 100%; padding: 1.5cm 2cm; }
+    .edge-card { page-break-inside: avoid; }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="book">
+  <header class="book-header">
+    <div class="book-title">Compendio de Ventajas</div>
+    <div class="book-subtitle">Manual del jugador</div>
+  </header>
+
+  {% set categories = edges | map(attribute='type') | unique | list %}
+  {% for category in categories %}
+  <section class="category-section">
+    {% if category %}<div class="category-heading">{{ category }}</div>{% endif %}
+
+    {% for edge in edges if edge.type == category %}
+    <article class="edge-card">
+      <div class="edge-header">
+        <div>
+          <span class="edge-name">{{ edge.title or edge.name }}</span>
+          {% if edge.name_original %}<span class="edge-name-original">({{ edge.name_original }})</span>{% endif %}
+        </div>
+        {% if edge.reference_book %}
+        <span class="edge-source">{{ edge.reference_book.title }}{% if edge.page_no %} p.{{ edge.page_no }}{% endif %}</span>
+        {% endif %}
+      </div>
+      {% if edge.requirements %}<div class="edge-requirements">{{ edge.requirements }}</div>{% endif %}
+      {% if edge.description %}<p class="edge-description">{{ edge.description }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <footer class="book-footer">— Compendio generado automáticamente —</footer>
+</div>
+{% endblock %}

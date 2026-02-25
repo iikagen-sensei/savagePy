@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Savage Worlds{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── VARIABLES COMUNES ── */
+    :root {
+      --ink: #1a1208;
+      --parchment: #f5ede0;
+      --parchment-dark: #e8d9c0;
+      --gold: #8b6914;
+      --gold-light: #c9a84c;
+      --crimson: #7a1c1c;
+      --shadow: rgba(26,18,8,0.18);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── RESET Y BASE ── */
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ── UTILIDADES COMUNES ── */
+    .cinzel { font-family: 'Cinzel', serif; }
+
+    .gold-divider {
+      border: none;
+      border-top: 1px solid var(--gold);
+      margin: 1rem 0;
+      opacity: 0.4;
+    }
+
+    @media print {
+      body { background: white !important; padding: 0 !important; }
+    }
+  </style>
+
+  {% block extra_styles %}{% endblock %}
+</head>
+<body>
+  {% block body %}{% endblock %}
+</body>
+</html>

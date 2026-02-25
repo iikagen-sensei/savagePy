@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Compendio de Poderes{% endblock %}
+
+{% block extra_styles %}
+<style>
+  body { background: #2c2416; padding: 2rem; }
+
+  .book {
+    max-width: 820px;
+    margin: 0 auto;
+    background: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(200,160,80,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(120,60,20,0.07) 0%, transparent 60%);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.6), inset 0 0 80px rgba(180,130,60,0.06);
+    border: 1px solid var(--gold);
+    padding: 3.5rem 4rem;
+  }
+
+  .book-header { text-align: center; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 2px solid var(--gold); }
+  .book-header::after { content: '❧'; display: block; font-size: 1.4rem; color: var(--gold-light); margin-top: 0.8rem; }
+  .book-title { font-family: 'Cinzel', serif; font-size: 2.4rem; font-weight: 700; color: var(--crimson); letter-spacing: 0.04em; line-height: 1.2; }
+  .book-subtitle { font-family: 'Cinzel', serif; font-size: 0.95rem; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-top: 0.4rem; }
+
+  .rank-section { margin-bottom: 2.5rem; }
+  .rank-heading {
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+    color: var(--parchment); background: var(--crimson);
+    letter-spacing: 0.25em; text-transform: uppercase;
+    padding: 0.35rem 1.8rem 0.35rem 1.2rem; display: inline-block; margin-bottom: 1.2rem;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%);
+  }
+
+  .power-card {
+    background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+    border: 1px solid var(--gold); border-left: 4px solid var(--gold);
+    margin-bottom: 1.6rem; padding: 1.2rem 1.4rem;
+    position: relative; box-shadow: 2px 2px 8px var(--shadow); page-break-inside: avoid;
+  }
+  .power-card::before {
+    content: ''; position: absolute; top: 0; right: 0;
+    width: 0; height: 0; border-style: solid;
+    border-width: 0 18px 18px 0; border-color: transparent var(--gold-light) transparent transparent; opacity: 0.5;
+  }
+
+  .power-header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.6rem; border-bottom: 1px solid rgba(139,105,20,0.3); padding-bottom: 0.5rem; }
+  .power-name { font-family: 'Cinzel', serif; font-size: 1.15rem; font-weight: 600; color: var(--crimson); }
+  .power-name-original { font-style: italic; font-size: 0.88rem; color: var(--gold); margin-left: 0.5rem; }
+  .power-source { font-size: 0.78rem; color: var(--gold); font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+
+  .power-stats { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; margin-bottom: 0.75rem; font-size: 0.88rem; }
+  .stat { display: flex; gap: 0.3rem; align-items: center; }
+  .stat-label { font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 0.08em; }
+  .stat-value { font-weight: 500; }
+
+  .power-description { font-size: 0.95rem; line-height: 1.65; color: #2a1e0e; text-align: justify; }
+
+  .modifiers-section { margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px dashed rgba(139,105,20,0.4); }
+  .modifiers-label { font-family: 'Cinzel', serif; font-size: 0.72rem; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.5rem; }
+  .modifier-item { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.35rem; font-size: 0.88rem; line-height: 1.5; }
+  .modifier-cost { font-family: 'Cinzel', serif; font-weight: 700; color: var(--crimson); font-size: 0.82rem; white-space: nowrap; min-width: 2rem; text-align: right; }
+  .modifier-title { font-weight: 600; white-space: nowrap; }
+  .modifier-desc { color: #3a2a14; font-style: italic; }
+
+  .book-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--gold); text-align: center; font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--gold); letter-spacing: 0.15em; }
+
+  @media print {
+    .book { box-shadow: none; border: none; max-width: 100%; padding: 1.5cm 2cm; }
+    .power-card { page-break-inside: avoid; }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="book">
+  <header class="book-header">
+    <div class="book-title">Compendio de Poderes</div>
+    <div class="book-subtitle">Manual del jugador</div>
+  </header>
+
+  {% set ranks = powers | map(attribute='rank_name') | unique | list %}
+  {% for rank in ranks %}
+  <section class="rank-section">
+    <div class="rank-heading">{{ rank }}</div>
+    {% for power in powers if power.rank_name == rank %}
+    <article class="power-card">
+      <div class="power-header">
+        <div>
+          <span class="power-name">{{ power.name }}</span>
+          {% if power.name_original %}<span class="power-name-original">({{ power.name_original }})</span>{% endif %}
+        </div>
+        {% if power.reference_book %}
+        <span class="power-source">{{ power.reference_book.title }}{% if power.page_no %} p.{{ power.page_no }}{% endif %}</span>
+        {% endif %}
+      </div>
+      <div class="power-stats">
+        {% if power.cost %}<div class="stat"><span class="stat-label">Coste</span><span class="stat-value">{{ power.cost }} PP</span></div>{% endif %}
+        {% if power.range or power.range_roh %}<div class="stat"><span class="stat-label">Alcance</span><span class="stat-value">{{ power.range_roh or power.range }}</span></div>{% endif %}
+        {% if power.duration %}<div class="stat"><span class="stat-label">Duración</span><span class="stat-value">{{ power.duration }} r.</span></div>{% endif %}
+      </div>
+      {% if power.description %}<p class="power-description">{{ power.description }}</p>{% endif %}
+      {% if power.modifiers %}
+      <div class="modifiers-section">
+        <div class="modifiers-label">✦ Modificadores</div>
+        {% for mod in power.modifiers %}
+        <div class="modifier-item">
+          <span class="modifier-cost">{{ mod.cost }}</span>
+          <span class="modifier-title">{{ mod.title }}:</span>
+          <span class="modifier-desc">{{ mod.description }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <footer class="book-footer">✦ &nbsp; Compendio generado automáticamente &nbsp; ✦</footer>
+</div>
+{% endblock %}

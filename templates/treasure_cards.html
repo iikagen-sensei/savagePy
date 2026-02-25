@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --rarity-inusual:          #E0E0E0;
+    --rarity-inusual-text:     #1a1a1a;
+    --rarity-inusual-bg:       #f7f7f7;
+    --rarity-excepcional:      #2C5F2D;
+    --rarity-excepcional-text: #e8f5e9;
+    --rarity-excepcional-bg:   #eaf3ea;
+    --rarity-artefacto:        #1A4375;
+    --rarity-artefacto-text:   #e3eaf5;
+    --rarity-artefacto-bg:     #e8eef6;
+    --rarity-legendario:       #8B4513;
+    --rarity-legendario-text:  #fdf0e6;
+    --rarity-legendario-bg:    #f7ede2;
+    --rarity-reliquia:         #D4AF37;
+    --rarity-reliquia-text:    #1a1400;
+    --rarity-reliquia-bg:      #fdf8e6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page { size: A4 portrait; margin: 8mm; }
+
+  body {
+    font-family: 'Crimson Pro', Georgia, serif;
+    background: white;
+    width: 194mm;
+  }
+
+  /* ── Página: tabla 3×3, sin border-spacing (lo controlamos con padding de celda) ── */
+  .page {
+    display: table;
+    width: 194mm;
+    border-collapse: collapse;
+    page-break-after: always;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .row { display: table-row; }
+
+  .cell {
+    display: table-cell;
+    width: 62mm;
+    height: 89mm;
+    padding: 2mm;
+    vertical-align: top;
+  }
+  .cell-empty {
+    display: table-cell;
+    width: 62mm;
+  }
+
+  /* ── Tarjeta 58×85mm (62mm celda - 2×2mm padding) ── */
+  .card {
+    width: 58mm;
+    height: 85mm;
+    border-radius: 3mm;
+    border: 0.5mm solid #bbb;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Fondo de carta según rareza ── */
+  .card.inusual     { background: var(--rarity-inusual-bg);     border-color: var(--rarity-inusual); }
+  .card.excepcional { background: var(--rarity-excepcional-bg); border-color: var(--rarity-excepcional); }
+  .card.artefacto   { background: var(--rarity-artefacto-bg);   border-color: var(--rarity-artefacto); }
+  .card.legendario  { background: var(--rarity-legendario-bg);  border-color: var(--rarity-legendario); }
+  .card.reliquia    { background: var(--rarity-reliquia-bg);    border-color: var(--rarity-reliquia); }
+
+  /* ── Cabecera de color sólido ── */
+  .card-header {
+    height: 7mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 3mm;
+    flex-shrink: 0;
+  }
+  .card.inusual     .card-header { background: var(--rarity-inusual);     color: var(--rarity-inusual-text); }
+  .card.excepcional .card-header { background: var(--rarity-excepcional); color: var(--rarity-excepcional-text); }
+  .card.artefacto   .card-header { background: var(--rarity-artefacto);   color: var(--rarity-artefacto-text); }
+  .card.legendario  .card-header { background: var(--rarity-legendario);  color: var(--rarity-legendario-text); }
+  .card.reliquia    .card-header { background: var(--rarity-reliquia);    color: var(--rarity-reliquia-text); }
+
+  .card-rarity {
+    font-family: 'Cinzel', serif;
+    font-size: 5.5pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .card-type {
+    font-size: 5.5pt;
+    font-style: italic;
+    opacity: 0.85;
+  }
+
+  /* ── Imagen: fondo blanco para transparencias ── */
+  .card-image {
+    width: 100%;
+    height: 28mm;
+    flex-shrink: 0;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-bottom: 0.3mm solid rgba(0,0,0,0.1);
+  }
+  .card-image img {
+    max-width: 88%;
+    max-height: 88%;
+    object-fit: contain;
+    display: block;
+  }
+  .card-image.empty { background: #f0f0f0; }
+  .card-image.empty::after { content: '✦'; font-size: 14pt; color: #ccc; }
+
+  /* ── Nombre ── */
+  .card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 8pt;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1a1a1a;
+    padding: 2mm 3mm 1.5mm;
+    text-align: center;
+    border-bottom: 0.3mm solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+
+  /* ── Cuerpo ── */
+  .card-body {
+    flex: 1;
+    padding: 1.5mm 3mm 2mm;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5mm;
+    overflow: hidden;
+  }
+
+  .card-stat {
+    font-size: 8pt;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+  }
+  .card-description {
+    font-size: 7.5pt;
+    line-height: 1.45;
+    color: #444;
+    font-style: italic;
+  }
+  .card-ability {
+    font-size: 7.5pt;
+    line-height: 1.45;
+    color: #1a1a1a;
+    border-top: 0.3mm solid rgba(0,0,0,0.12);
+    padding-top: 1.5mm;
+    margin-top: auto;
+  }
+  .card-ability-label {
+    font-family: 'Cinzel', serif;
+    font-size: 5.5pt;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 0.5mm;
+  }
+</style>
+</head>
+<body>
+
+{% set items = treasures | selectattr('name') | list %}
+{% set per_page = 9 %}
+{% set per_row  = 3 %}
+
+{% for page_start in range(0, items|length, per_page) %}
+{% set page_items = items[page_start : page_start + per_page] %}
+<div class="page">
+  {% for row_start in range(0, per_page, per_row) %}
+  <div class="row">
+    {% for i in range(per_row) %}
+    {% set idx = row_start + i %}
+    {% if idx < page_items|length %}
+    {% set t = page_items[idx] %}
+    {% set rarity_raw   = t.rarity or '' %}
+    {% set rarity_class = rarity_raw | lower
+        | replace('á','a') | replace('é','e') | replace('í','i')
+        | replace('ó','o') | replace('ú','u') %}
+    <div class="cell">
+      <div class="card {{ rarity_class }}">
+
+        <div class="card-header">
+          <span class="card-rarity">{{ rarity_raw }}</span>
+          <span class="card-type">{{ t.type or '' }}</span>
+        </div>
+
+        {% if t.image and t.image|length > 0 %}
+        <div class="card-image">
+          <img src="{{ nocodb_url }}/{{ t.image[0].signedPath }}" alt="{{ t.name }}">
+        </div>
+        {% else %}
+        <div class="card-image empty"></div>
+        {% endif %}
+
+        <div class="card-name">{{ t.name }}</div>
+
+        <div class="card-body">
+          {% if t.stat %}
+          <div class="card-stat">{{ t.stat }}</div>
+          {% endif %}
+          {% if t.description %}
+          <div class="card-description">{{ t.description }}</div>
+          {% endif %}
+          {% if t.ability %}
+          <div class="card-ability">
+            {{ t.ability }}
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+    {% else %}
+    <div class="cell-empty"></div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+</body>
+</html>

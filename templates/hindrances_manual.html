@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Compendio de Desventajas{% endblock %}
+
+{% block extra_styles %}
+<style>
+  body { background: #1c1410; padding: 2rem; }
+
+  .book {
+    max-width: 820px;
+    margin: 0 auto;
+    background: #2a2018;
+    border: 1px solid #5a3e28;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.7);
+    padding: 3rem 3.5rem;
+    color: #d4c4a8;
+  }
+
+  .book-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #5a3e28;
+  }
+  .book-header::before {
+    content: '☠';
+    display: block;
+    font-size: 2rem;
+    color: #8b2020;
+    margin-bottom: 0.6rem;
+  }
+  .book-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #c8a060;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+  }
+  .book-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: #7a6040;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+
+  .severity-section { margin-bottom: 2rem; }
+  .severity-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2a2018;
+    background: #c8a060;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .hindrance-card {
+    border: 1px solid #3a2c1c;
+    border-left: 4px solid #8b2020;
+    margin-bottom: 1rem;
+    padding: 1rem 1.2rem;
+    background: #221a12;
+    page-break-inside: avoid;
+  }
+
+  .hindrance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #3a2c1c;
+    padding-bottom: 0.4rem;
+  }
+  .hindrance-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #c8a060;
+  }
+  .hindrance-name-original {
+    font-style: italic;
+    font-size: 0.85rem;
+    color: #7a6040;
+    margin-left: 0.4rem;
+  }
+  .hindrance-source {
+    font-size: 0.75rem;
+    color: #5a4430;
+    font-family: 'Cinzel', serif;
+  }
+
+  .hindrance-description {
+    font-size: 0.93rem;
+    line-height: 1.65;
+    color: #b4a48a;
+    text-align: justify;
+  }
+
+  .book-footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #5a3e28;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: #5a4430;
+    letter-spacing: 0.15em;
+  }
+
+  @media print {
+    body { background: white; }
+    .book { background: white; color: black; box-shadow: none; max-width: 100%; padding: 1.5cm 2cm; }
+    .hindrance-card { background: #f8f4f0; border-color: #ccc; page-break-inside: avoid; }
+    .hindrance-name { color: #333; }
+    .hindrance-description { color: #222; }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="book">
+  <header class="book-header">
+    <div class="book-title">Compendio de Desventajas</div>
+    <div class="book-subtitle">Manual del jugador</div>
+  </header>
+
+  {% set severities = hindrances | map(attribute='severity') | unique | list %}
+  {% for severity in severities %}
+  <section class="severity-section">
+    {% if severity %}<div class="severity-heading">{{ severity }}</div>{% endif %}
+
+    {% for h in hindrances if h.severity == severity %}
+    <article class="hindrance-card">
+      <div class="hindrance-header">
+        <div>
+          <span class="hindrance-name">{{ h.title or h.name }}</span>
+          {% if h.name_original %}<span class="hindrance-name-original">({{ h.name_original }})</span>{% endif %}
+        </div>
+        {% if h.reference_book %}
+        <span class="hindrance-source">{{ h.reference_book.title }}{% if h.page_no %} p.{{ h.page_no }}{% endif %}</span>
+        {% endif %}
+      </div>
+      {% if h.description %}<p class="hindrance-description">{{ h.description }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <footer class="book-footer">☠ &nbsp; Compendio generado automáticamente &nbsp; ☠</footer>
+</div>
+{% endblock %}

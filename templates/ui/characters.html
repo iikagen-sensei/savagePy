@@ -1,0 +1,78 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Personajes · Savage Worlds{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Gestión de personajes</div>
+    <h1>Taberna<br>de <strong>aventureros</strong></h1>
+  </div>
+</div>
+
+<main class="sw-main">
+  <div class="list-head">
+    <span class="list-head-title">{{ characters|length }} personaje{{ 's' if characters|length != 1 }}</span>
+    <a href="/characters/new" class="btn btn-solid">+ Nuevo personaje</a>
+  </div>
+
+  {% if characters %}
+  <div class="chars-grid">
+    {% for char in characters %}
+    {% set cid = char.id|default(char.Id) %}
+    <div class="char-card">
+      <div class="char-card-img">
+        {% if char.image_url %}
+          <img src="{{ char.image_url }}" alt="{{ char.name }}">
+        {% else %}
+          <div class="char-card-placeholder">🧙</div>
+        {% endif %}
+        <div class="char-card-overlay">
+          <div class="char-card-name">{{ char.name }}</div>
+        </div>
+      </div>
+      <div class="char-card-body">
+        <div class="char-card-concept">{{ char.data.concept if char.data and char.data.concept else '—' }}</div>
+        <div class="char-card-actions">
+          <a href="/characters/{{ cid }}/edit" class="btn btn-outline">Editar</a>
+          <button class="btn btn-red btn-del" onclick="confirmDelete({{ cid }}, '{{ char.name }}')">✕</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align:center; padding:4rem 2rem; color:var(--muted);">
+    <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🧙</div>
+    <div style="font-family:'Cinzel',serif; font-size:1.1rem; margin-bottom:0.5rem;">Sin personajes todavía</div>
+    <div style="font-style:italic; margin-bottom:1.5rem;">Crea tu primer personaje para empezar.</div>
+    <a href="/characters/new" class="btn btn-solid">+ Nuevo personaje</a>
+  </div>
+  {% endif %}
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Eliminar personaje</h3>
+    <p id="modalMsg">¿Seguro que quieres eliminar este personaje?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <form id="deleteForm" method="POST" style="display:inline">
+        <button type="submit" class="btn btn-red">Eliminar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function confirmDelete(id, name) {
+    document.getElementById('modalMsg').textContent = '¿Seguro que quieres eliminar a ' + name + '? Esta acción no se puede deshacer.';
+    document.getElementById('deleteForm').action = '/characters/' + id + '/delete';
+    document.getElementById('modalBg').classList.add('active');
+  }
+  function closeModal() { document.getElementById('modalBg').classList.remove('active'); }
+  document.getElementById('modalBg').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+</script>
+{% endblock %}

@@ -1,0 +1,726 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Savage Worlds · {{ 'Editar' if record_id else 'Nueva' }} Criatura{% endblock %}
+
+{% block head %}
+<style>
+    /* extras exclusivos del formulario de bestiario */
+    .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:0.8rem; }
+    .stat-row.c5 { grid-template-columns:repeat(5,1fr); }
+    .stat-row.c2 { grid-template-columns:1fr 1fr; }
+    .stat-row.c3 { grid-template-columns:1fr 1fr 1fr; }
+    .stat-field { display:flex; flex-direction:column; align-items:center; gap:0.3rem; }
+    .stat-label { font-family:'Rajdhani',sans-serif; font-size:0.68rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); text-align:center; }
+    .stat-input { text-align:center; font-family:'Rajdhani',sans-serif; font-size:1.15rem; font-weight:700; color:var(--red); width:100%; padding:0.4rem 0.2rem; background:var(--bg); border:1px solid var(--border); }
+    .stat-input:focus { outline:none; border-color:var(--red); }
+    /* variantes (escudo, armadura...) */
+    .variants-list { display:flex; flex-direction:column; gap:0.3rem; margin-top:0.4rem; overflow-x:auto; }
+    .variant-row { display:flex; gap:0.4rem; align-items:center; flex-wrap:nowrap; }
+    .variant-type { flex:2; min-width:0; font-size:0.9rem; }
+    .variant-val  { flex:1; min-width:0; font-size:0.9rem; text-align:center; }
+    /* habilidades especiales */
+    .special-ability-row { display:flex; flex-direction:column; gap:0.3rem; padding:0.6rem; border:1px solid var(--border); background:var(--bg2); margin-bottom:0.5rem; }
+    .special-ability-row input[type="text"] { font-weight:600; }
+    /* toggle comodin */
+    .wildcard-toggle { display:flex; align-items:center; gap:0.8rem; }
+    .toggle-btn { font-family:'Rajdhani',sans-serif; font-size:0.78rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; padding:0.4rem 1rem; border:1px solid var(--border); cursor:pointer; background:var(--bg); color:var(--muted); transition:all 0.15s; }
+    .toggle-btn.active { background:var(--red); color:#fff; border-color:var(--red); }
+    /* section collapse */
+    .section-header { cursor:pointer; user-select:none; }
+    .section-header:hover { background:#e8e8e6; }
+    .section.collapsed .section-body { display:none; }
+    /* rasgos secundarios layout */
+    .parry-toughness-row { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+    .parry-toughness-row .stat-field-row { display:flex; flex-direction:row; justify-content:space-between; align-items:center; }
+    .pace-variants-block { margin-top:1rem; }
+    .pace-variants-block .stat-label { margin-bottom:0.4rem; display:block; }
+    .stat-row-mid { margin:1.2rem 0; }
+    .skills-section-body { padding:0.5rem; }
+    .power-header-row { display:flex; gap:0.6rem; margin-bottom:0.8rem; align-items:flex-end; }
+    .power-trapping-field { flex:3; }
+    .power-pp-field { flex:1; }
+    .power-pp-field .stat-input { width:100%; font-size:1rem; }
+  </style>
+{% endblock %}
+
+{% block header_extra %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Bestiario</div>
+    <h1>{{ 'Editar' if record_id else 'Nueva' }} <strong>criatura</strong></h1>
+  </div>
+</div>
+<div class="save-bar">
+  <span class="save-bar-title">{{ 'Editando: ' + creature.name if creature and creature.name else 'Nueva criatura' }}</span>
+  <div class="save-bar-actions">
+    <a class="btn btn-ghost" href="/bestiary">← Volver</a>
+    <button class="btn btn-solid" onclick="saveCreature()">Guardar</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-txt">Cargando datos...</div>
+</div>
+
+
+
+<form id="creatureForm" action="/bestiary/save" method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="record_id" value="{{ record_id or '' }}">
+  <input type="hidden" name="creature_json" id="creatureJson">
+  <input type="file" name="image" id="imageFileInput" accept="image/*" style="display:none">
+
+<div class="form-layout">
+
+  <!-- ── SECCIONES IZQUIERDA ── -->
+  <div class="form-sections">
+
+
+    <!-- ATRIBUTOS -->
+    <div class="section">
+      <div class="section-header form-section-head">Atributos</div>
+      <div class="section-body form-section-body">
+        <div class="stat-row c5">
+          <div class="stat-field"><span class="stat-label">Agilidad</span>
+            <select class="stat-input" id="attr-agility">
+              <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+              <option value="d10">d10</option><option value="d12">d12</option>
+              <option value="d12+1">d12+1</option><option value="d12+2">d12+2</option>
+              <option value="d12+3">d12+3</option><option value="d12+4">d12+4</option>
+              <option value="d12+6">d12+6</option><option value="d12+8">d12+8</option>
+            </select></div>
+          <div class="stat-field"><span class="stat-label">Astucia</span>
+            <select class="stat-input" id="attr-smarts">
+              <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+              <option value="d10">d10</option><option value="d12">d12</option>
+              <option value="d12+1">d12+1</option><option value="d12+2">d12+2</option>
+              <option value="d12+3">d12+3</option><option value="d12+4">d12+4</option>
+              <option value="d12+6">d12+6</option><option value="d12+8">d12+8</option>
+            </select></div>
+          <div class="stat-field"><span class="stat-label">Espíritu</span>
+            <select class="stat-input" id="attr-spirit">
+              <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+              <option value="d10">d10</option><option value="d12">d12</option>
+              <option value="d12+1">d12+1</option><option value="d12+2">d12+2</option>
+              <option value="d12+3">d12+3</option><option value="d12+4">d12+4</option>
+              <option value="d12+6">d12+6</option><option value="d12+8">d12+8</option>
+            </select></div>
+          <div class="stat-field"><span class="stat-label">Fuerza</span>
+            <select class="stat-input" id="attr-strength">
+              <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+              <option value="d10">d10</option><option value="d12">d12</option>
+              <option value="d12+1">d12+1</option><option value="d12+2">d12+2</option>
+              <option value="d12+3">d12+3</option><option value="d12+4">d12+4</option>
+              <option value="d12+6">d12+6</option><option value="d12+8">d12+8</option>
+            </select></div>
+          <div class="stat-field"><span class="stat-label">Vigor</span>
+            <select class="stat-input" id="attr-vigor">
+              <option value="d4">d4</option><option value="d6">d6</option><option value="d8">d8</option>
+              <option value="d10">d10</option><option value="d12">d12</option>
+              <option value="d12+1">d12+1</option><option value="d12+2">d12+2</option>
+              <option value="d12+3">d12+3</option><option value="d12+4">d12+4</option>
+              <option value="d12+6">d12+6</option><option value="d12+8">d12+8</option>
+            </select></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HABILIDADES -->
+    <div class="section">
+      <div class="section-header form-section-head">Habilidades</div>
+      <div class="section-body form-section-body skills-section-body">
+        <div class="skills-grid" id="skillsGrid"></div>
+      </div>
+    </div>    
+
+    <!-- RASGOS SECUNDARIOS -->
+    <div class="section">
+      <div class="section-header form-section-head">Rasgos secundarios</div>
+      <div class="section-body form-section-body">
+
+        <!-- Parada y Dureza con variantes -->
+        <div class="parry-toughness-row">
+          <div>
+            <div class="stat-field-row">
+              <span class="stat-label">Parada</span>
+              <input type="text" class="stat-input" id="statParry" placeholder="2" style="width:80px;">
+            </div>
+            <div class="variants-list" id="parryVariants"></div>
+            <button type="button" class="btn-add" onclick="setSimpleVariant('parry')" id="btnAddParry">+ Variante parada</button>
+          </div>
+          <div>
+            <div class="stat-field-row">
+              <span class="stat-label">Dureza</span>
+              <input type="text" class="stat-input" id="statToughness" placeholder="2" style="width:80px;">
+            </div>
+            <div class="variants-list" id="toughnessVariants"></div>
+            <button type="button" class="btn-add" onclick="setSimpleVariant('toughness')" id="btnAddToughness">+ Variante dureza</button>
+          </div>
+        </div>
+
+        <div class="stat-row c3 stat-row-mid">
+          <div class="stat-field"><span class="stat-label">Paso</span>
+            <input type="text" class="stat-input" id="statPace" placeholder="6"></div>
+          <div class="stat-field"><span class="stat-label">Tamaño</span>
+            <input type="text" class="stat-input" id="statSize" placeholder="0"></div>
+          <div class="stat-field"><span class="stat-label">Heridas</span>
+            <input type="text" class="stat-input" id="statWounds" placeholder="3"></div>
+        </div>
+
+        <!-- Variantes de paso -->
+        <div class="pace-variants-block">
+          <span class="stat-label">Variantes de movimiento</span>
+          <div class="variants-list" id="paceVariants"></div>
+          <button type="button" class="btn-add" onclick="addPaceVariant()">+ Vuelo / Nado / Madriguera...</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- VENTAJAS -->
+    <div class="section">
+      <div class="section-header form-section-head">Ventajas</div>
+      <div class="section-body form-section-body">
+        <div class="dynamic-list" id="edgesList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="edgeSearch" placeholder="Buscar ventaja..."
+                 oninput="filterAutocomplete('edge')" onfocus="showAutocomplete('edge')"
+                 onblur="hideAutocomplete('edge',300)">
+          <div class="autocomplete-dropdown" id="edgeDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESVENTAJAS -->
+    <div class="section">
+      <div class="section-header form-section-head">Desventajas</div>
+      <div class="section-body form-section-body">
+        <div class="dynamic-list" id="hindrancesList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="hindranceSearch" placeholder="Buscar desventaja..."
+                 oninput="filterAutocomplete('hindrance')" onfocus="showAutocomplete('hindrance')"
+                 onblur="hideAutocomplete('hindrance',300)">
+          <div class="autocomplete-dropdown" id="hindranceDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PODERES -->
+    <div class="section">
+      <div class="section-header form-section-head">Poderes</div>
+      <div class="section-body form-section-body">
+        <div class="power-header-row">
+          <div class="field power-trapping-field">
+            <label>Ornamento mágico</label>
+            <input type="text" id="powerTrapping" placeholder="Ej: maldiciones y fuego del infierno...">
+          </div>
+          <div class="field power-pp-field">
+            <label>PP</label>
+            <input type="text" class="stat-input" id="statPowerPoints" placeholder="0">
+          </div>
+        </div>
+        <div class="dynamic-list" id="powersList"></div>
+        <div class="autocomplete-wrap" style="margin-top:0.5rem">
+          <input type="text" id="powerSearch" placeholder="Buscar poder..."
+                 oninput="filterAutocomplete('power')" onfocus="showAutocomplete('power')"
+                 onblur="hideAutocomplete('power',300)">
+          <div class="autocomplete-dropdown" id="powerDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPO -->
+    <div class="section">
+      <div class="section-header form-section-head">Equipo</div>
+      <div class="section-body form-section-body">
+        <div class="dynamic-list" id="gearList"></div>
+        <button type="button" class="btn-add" onclick="addGear()">+ Añadir objeto</button>
+      </div>
+    </div>
+
+    <!-- HABILIDADES ESPECIALES -->
+    <div class="section">
+      <div class="section-header form-section-head">Habilidades especiales</div>
+      <div class="section-body form-section-body">
+        <div id="specialAbilitiesList"></div>
+        <button type="button" class="btn-add" onclick="addSpecialAbility()">+ Añadir habilidad especial</button>
+      </div>
+    </div>
+
+  </div><!-- /form-sections -->
+
+  <!-- ── SIDEBAR ── -->
+  <div class="form-sidebar">
+
+    <!-- DATOS BÁSICOS -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Datos básicos</div>
+      <div class="sidebar-panel-body">
+        <div class="field-row cols-1">
+          <div class="field"><label>Nombre</label>
+            <input type="text" id="creatureName" placeholder="Nombre de la criatura"></div>
+          <div class="field"><label>Tipo</label>
+            <select id="creatureType">
+              <option value="">— Sin tipo —</option>
+              <option value="Animal">Animal</option>
+              <option value="Bestia mágica">Bestia mágica</option>
+              <option value="Constructos">Constructos</option>
+              <option value="Dragón">Dragón</option>
+              <option value="Extraplanar">Extraplanar</option>
+              <option value="Feérico">Feérico</option>
+              <option value="Humanoide">Humanoide</option>
+              <option value="Monstruo">Monstruo</option>
+              <option value="No muerto">No muerto</option>
+              <option value="Planta">Planta</option>
+            </select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Concepto</label>
+            <input type="text" id="creatureConcept" placeholder="Descripción corta"></div>
+        </div>
+        <div class="wildcard-toggle" style="margin-top:0.6rem;">
+          <span class="stat-label">Comodín</span>
+          <button type="button" class="toggle-btn" id="wildcardBtn" onclick="toggleWildcard()">No</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- Imagen -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Imagen</div>
+      <div class="sidebar-panel-body">
+        <div class="image-preview" id="imagePreview">
+          <img id="imagePreviewImg" alt="Criatura">
+          <div class="image-placeholder" id="imagePlaceholder">Sin imagen</div>
+        </div>
+        <div class="image-drop-zone" onclick="document.getElementById('imageFileInput').click()">
+          <label class="image-drop-label">📁 Seleccionar imagen</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Descripción -->
+    <div class="sidebar-panel">
+      <div class="sidebar-panel-head">Descripción narrativa</div>
+      <div class="sidebar-panel-body">
+        <textarea class="desc-textarea" id="creatureDescription"
+                  placeholder="Descripción, trasfondo, comportamiento..."></textarea>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /form-layout -->
+</form>
+
+{% block scripts %}
+<script>
+const DICE = ['', 'd4', 'd6', 'd8', 'd10', 'd12', 'd12+1', 'd12+2', 'd12+3'];
+const INITIAL = {{ (creature | tojson) if creature else 'null' }};
+const IMAGE_URL = {{ (image_url | tojson) if image_url else 'null' }};
+
+let DB = { skills:[], edges:[], hindrances:[], powers:[] };
+let state = {
+  wild_card: false,
+  edges: [],
+  hindrances: [],
+  powers: [],
+  gear: [],
+  special_abilities: [],
+  pace_variants: [],           // array — puede haber vuelo + nado + madriguera
+  parry_variant: null,         // objeto único o null — siempre es el escudo
+  toughness_variant: null,     // objeto único o null — siempre es la armadura
+};
+
+// ── Init ──────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('/api/form-data/bestiary');
+    DB = await res.json();
+    buildSkillsGrid();
+    buildAutocomplete('edge');
+    buildAutocomplete('hindrance');
+    buildAutocomplete('power');
+    if (INITIAL) loadExisting(INITIAL);
+    if (IMAGE_URL) showImageUrl(IMAGE_URL);
+  } catch(e) {
+    console.error('Error cargando datos:', e);
+  } finally {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
+}
+
+function loadExisting(c) {
+  document.getElementById('creatureName').value    = c.name    || '';
+  const typeEl = document.getElementById('creatureType');
+  if (typeEl.tagName === 'SELECT') {
+    typeEl.value = c.type || '';
+  } else {
+    typeEl.value = c.type || '';
+  }
+  document.getElementById('creatureConcept').value = c.concept || '';
+  document.getElementById('creatureDescription').value = c.description || '';
+
+  // Comodín
+  state.wild_card = !!(c.wild_card);
+  updateWildcardBtn();
+
+  // Atributos
+  const attrs = c.attributes || {};
+  ['agility','smarts','spirit','strength','vigor'].forEach(a => {
+    const el = document.getElementById('attr-' + a);
+    if (el && attrs[a]) el.value = attrs[a];
+  });
+
+  // Stats combate
+  if (c.pace    !== undefined) document.getElementById('statPace').value    = c.pace;
+  if (c.size    !== undefined) document.getElementById('statSize').value    = c.size;
+  if (c.wounds  !== undefined) document.getElementById('statWounds').value  = c.wounds;
+  if (c.power_points !== undefined) document.getElementById('statPowerPoints').value = c.power_points;
+  if (c.power_trapping !== undefined) document.getElementById('powerTrapping').value = c.power_trapping;
+  if (c.parry   !== undefined) document.getElementById('statParry').value   = c.parry;
+  if (c.toughness !== undefined) document.getElementById('statToughness').value = c.toughness;
+
+  // Variantes
+  (c.pace_variant || []).forEach(v => addPaceVariant(v.type, v.value));
+  if (c.parry_variant)     setSimpleVariant('parry',     c.parry_variant.type,     c.parry_variant.value);
+  if (c.toughness_variant) setSimpleVariant('toughness', c.toughness_variant.type, c.toughness_variant.value);
+
+  // Habilidades
+  (c.skills || []).forEach(sk => {
+    const el = document.getElementById('skill-' + sk.name);
+    if (el) el.value = sk.value || '';
+  });
+
+  // Ventajas
+  (c.edges || []).forEach(name => addEdge(name));
+
+  // Desventajas
+  (c.hindrances || []).forEach(h => {
+    const m = (typeof h === 'string') && h.match(/^(.+?)\s*\((\w+)\)(?:\s*\[(.+)\])?$/);
+    if (m) addHindrance(m[1].trim(), m[2], m[3] || '');
+    else addHindrance(typeof h === 'string' ? h : (h.name || ''), '', '');
+  });
+
+  // Poderes
+  (c.powers || []).forEach(p => addPower(typeof p === 'string' ? p : p.name));
+
+  // Equipo
+  (c.gear || []).forEach(g => addGear(g.item, g.notes));
+
+  // Habilidades especiales
+  (c.special_abilities || []).forEach(sa => addSpecialAbility(sa.name, sa.description));
+}
+
+// ── Comodín ───────────────────────────────────────────────────────
+function toggleWildcard() {
+  state.wild_card = !state.wild_card;
+  updateWildcardBtn();
+}
+function updateWildcardBtn() {
+  const btn = document.getElementById('wildcardBtn');
+  btn.textContent = state.wild_card ? 'Sí ♠' : 'No';
+  btn.classList.toggle('active', state.wild_card);
+}
+
+// ── Variantes de paso (array) ────────────────────────────────────
+function addPaceVariant(type='', value='') {
+  state.pace_variants.push({ type, value });
+  renderPaceVariants();
+}
+function removePaceVariant(i) {
+  state.pace_variants.splice(i, 1);
+  renderPaceVariants();
+}
+function renderPaceVariants() {
+  const list = document.getElementById('paceVariants');
+  list.innerHTML = state.pace_variants.map((v, i) => `
+    <div class="variant-row">
+      <input type="text" class="variant-type" value="${escHtml(v.type)}"
+             placeholder="Vuelo, Nado..." oninput="state.pace_variants[${i}].type=this.value">
+      <input type="text" class="variant-val" value="${escHtml(String(v.value))}"
+             placeholder="valor" oninput="state.pace_variants[${i}].value=this.value">
+      <button class="btn-remove" type="button" onclick="removePaceVariant(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Variantes simples: parada (escudo) y dureza (armadura) ────────
+function setSimpleVariant(stat, type='', value='') {
+  state[stat + '_variant'] = { type, value };
+  renderSimpleVariant(stat);
+}
+function clearSimpleVariant(stat) {
+  state[stat + '_variant'] = null;
+  renderSimpleVariant(stat);
+}
+function renderSimpleVariant(stat) {
+  const list = document.getElementById(stat + 'Variants');
+  const btn  = document.getElementById('btnAdd' + stat.charAt(0).toUpperCase() + stat.slice(1));
+  const v = state[stat + '_variant'];
+  if (!v) {
+    list.innerHTML = '';
+    if (btn) btn.style.display = '';
+    return;
+  }
+  if (btn) btn.style.display = 'none';
+  list.innerHTML = `
+    <div class="variant-row">
+      <input type="text" class="variant-type" value="${escHtml(v.type)}"
+             placeholder="Escudo, Armadura..." oninput="state['${stat}_variant'].type=this.value">
+      <input type="text" class="variant-val" value="${escHtml(String(v.value))}"
+             placeholder="valor" oninput="state['${stat}_variant'].value=this.value">
+      <button class="btn-remove" type="button" onclick="clearSimpleVariant('${stat}')">✕</button>
+    </div>`;
+}
+
+// ── Habilidades ───────────────────────────────────────────────────
+function buildSkillsGrid() {
+  const grid = document.getElementById('skillsGrid');
+  grid.innerHTML = DB.skills.map(sk => {
+    const isCore = !!(sk.is_core || sk.is_core === 1);
+    const name = sk.name || sk.Name || '';
+    return `<div class="skill-row">
+      <span class="skill-name ${isCore?'core':''}">${name}</span>
+      <select class="skill-select" id="skill-${name}">
+        ${DICE.map(d => `<option value="${d}">${d||'—'}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+// ── Autocomplete (igual que character_form) ───────────────────────
+const _acCache = {};
+
+function buildAutocomplete(type) {
+  const map = { edge:'edges', hindrance:'hindrances', power:'powers' };
+  _acCache[type] = DB[map[type]] || [];
+  _renderDropdown(type, _acCache[type]);
+  const drop = document.getElementById(type + 'Dropdown');
+  drop.addEventListener('mousedown', function(e) {
+    const el = e.target.closest('.ac-item');
+    if (!el) return;
+    e.preventDefault();
+    const idx  = parseInt(el.dataset.acIdx);
+    const item = (_acCache[type + '_filtered'] || [])[idx];
+    if (!item) return;
+    const name = item.name || '';
+    document.getElementById(type + 'Search').value = '';
+    drop.style.display = 'none';
+    if (type === 'edge')      addEdge(name);
+    if (type === 'hindrance') addHindranceFromDB(name);
+    if (type === 'power')     addPower(name);
+  });
+}
+
+function _normalize(s) {
+  return (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function _renderDropdown(type, items, isFiltered=false) {
+  const drop = document.getElementById(type + 'Dropdown');
+  const limit = isFiltered ? 120 : 20;
+  const visible = items.slice(0, limit);
+  _acCache[type + '_filtered'] = visible;
+  drop.innerHTML = visible.map((item, idx) => {
+    const name = item.name || '';
+    let meta = '';
+    if (type === 'edge') {
+      const parts = [item.rank_name, item.type].filter(Boolean);
+      meta = parts.join(' · ');
+    } else if (type === 'power') {
+      meta = item.rank_name || '';
+    }
+    return '<div class="ac-item" data-ac-idx="' + idx + '">' +
+      '<span class="ac-item-name">' + escHtml(name) + '</span>' +
+      (meta ? '<span class="ac-item-meta">' + escHtml(meta) + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function filterAutocomplete(type) {
+  const q = document.getElementById(type+'Search').value.toLowerCase().trim();
+  const all = _acCache[type] || [];
+  const filtered = q ? all.filter(i=>_normalize(i.name).includes(q)) : all;
+  _renderDropdown(type, filtered, !!q);
+  document.getElementById(type+'Dropdown').style.display='block';
+}
+function showAutocomplete(type) {
+  _renderDropdown(type, _acCache[type]||[], false);
+  document.getElementById(type+'Dropdown').style.display='block';
+}
+function hideAutocomplete(type, delay) {
+  setTimeout(()=>{ document.getElementById(type+'Dropdown').style.display='none'; }, delay);
+}
+
+// ── Ventajas ──────────────────────────────────────────────────────
+function addEdge(name) { state.edges.push({name}); renderEdges(); }
+function removeEdge(i) { state.edges.splice(i,1); renderEdges(); }
+function renderEdges() {
+  document.getElementById('edgesList').innerHTML = state.edges.map((e,i)=>`
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(e.name)}"
+             oninput="state.edges[${i}].name=this.value">
+      <button class="btn-remove" type="button" onclick="removeEdge(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Desventajas ───────────────────────────────────────────────────
+function addHindranceFromDB(name) {
+  const h = DB.hindrances.find(h=>(h.name||'')=== name);
+  const t = h ? (h.type||'') : '';
+  const def = (t==='Major'||t==='Mayor')?'Mayor':(t==='Minor'||t==='Menor')?'Menor':'';
+  addHindrance(name, def, '');
+}
+function addHindrance(name, type, detail) { state.hindrances.push({name,type:type||'',detail:detail||''}); renderHindrances(); }
+function removeHindrance(i) { state.hindrances.splice(i,1); renderHindrances(); }
+function renderHindrances() {
+  document.getElementById('hindrancesList').innerHTML = state.hindrances.map((h,i)=>`
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(h.name)}"
+             oninput="state.hindrances[${i}].name=this.value" placeholder="Desventaja">
+      <select class="w80" onchange="state.hindrances[${i}].type=this.value">
+        <option value="" ${!h.type?'selected':''}>—</option>
+        <option value="Mayor" ${h.type==='Mayor'?'selected':''}>Mayor</option>
+        <option value="Menor" ${h.type==='Menor'?'selected':''}>Menor</option>
+      </select>
+      <input type="text" class="flex1" value="${escHtml(h.detail)}"
+             oninput="state.hindrances[${i}].detail=this.value" placeholder="[detalle]">
+      <button class="btn-remove" type="button" onclick="removeHindrance(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Poderes ───────────────────────────────────────────────────────
+function addPower(name) { state.powers.push({name}); renderPowers(); }
+function removePower(i) { state.powers.splice(i,1); renderPowers(); }
+function renderPowers() {
+  document.getElementById('powersList').innerHTML = state.powers.map((p,i)=>`
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(p.name)}"
+             oninput="state.powers[${i}].name=this.value">
+      <button class="btn-remove" type="button" onclick="removePower(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Equipo ────────────────────────────────────────────────────────
+function addGear(item='', notes='') { state.gear.push({item,notes}); renderGear(); }
+function removeGear(i) { state.gear.splice(i,1); renderGear(); }
+function renderGear() {
+  document.getElementById('gearList').innerHTML = state.gear.map((g,i)=>`
+    <div class="dynamic-row">
+      <input type="text" class="flex1" value="${escHtml(g.item)}"
+             oninput="state.gear[${i}].item=this.value" placeholder="Objeto">
+      <input type="text" class="flex1" value="${escHtml(g.notes)}"
+             oninput="state.gear[${i}].notes=this.value" placeholder="Notas">
+      <button class="btn-remove" type="button" onclick="removeGear(${i})">✕</button>
+    </div>`).join('');
+}
+
+// ── Habilidades especiales ─────────────────────────────────────────
+function addSpecialAbility(name='', description='') {
+  state.special_abilities.push({name,description}); renderSpecialAbilities();
+}
+function removeSpecialAbility(i) { state.special_abilities.splice(i,1); renderSpecialAbilities(); }
+function renderSpecialAbilities() {
+  document.getElementById('specialAbilitiesList').innerHTML = state.special_abilities.map((sa,i)=>`
+    <div class="special-ability-row">
+      <div class="dynamic-row" style="margin-bottom:0.3rem;">
+        <input type="text" class="flex1" value="${escHtml(sa.name)}"
+               oninput="state.special_abilities[${i}].name=this.value" placeholder="Nombre">
+        <button class="btn-remove" type="button" onclick="removeSpecialAbility(${i})">✕</button>
+      </div>
+      <textarea style="width:100%;min-height:60px;background:var(--bg);border:1px solid var(--border);
+                       color:var(--ink);font-family:'EB Garamond',serif;font-size:0.95rem;
+                       padding:0.4rem 0.6rem;resize:vertical;"
+                placeholder="Descripción de la habilidad..."
+                oninput="state.special_abilities[${i}].description=this.value">${escHtml(sa.description)}</textarea>
+    </div>`).join('');
+}
+
+// ── Imagen ────────────────────────────────────────────────────────
+document.getElementById('imageFileInput').addEventListener('change', function() {
+  const file = this.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => showImageUrl(e.target.result);
+  reader.readAsDataURL(file);
+  const dt = new DataTransfer(); dt.items.add(file);
+  document.querySelector('input[name="image"]').files = dt.files;
+});
+function showImageUrl(url) {
+  const img = document.getElementById('imagePreviewImg');
+  const ph  = document.getElementById('imagePlaceholder');
+  img.src = url; img.style.display = 'block'; ph.style.display = 'none';
+}
+
+// ── Construir JSON y guardar ──────────────────────────────────────
+function buildCreatureJson() {
+  const skills = DB.skills.map(sk => {
+    const name = sk.name || sk.Name || '';
+    const el = document.getElementById('skill-' + name);
+    return { name, value: el ? el.value : '', is_core: !!(sk.is_core || sk.is_core === 1) };
+  });
+
+  const hindrances = state.hindrances.map(h => {
+    let s = h.name;
+    if (h.type) s += ` (${h.type})`;
+    if (h.detail) s += ` [${h.detail}]`;
+    return s;
+  });
+
+  return {
+    name:        document.getElementById('creatureName').value,
+    type:        document.getElementById('creatureType').value,
+    concept:     document.getElementById('creatureConcept').value,
+    description: document.getElementById('creatureDescription').value,
+    wild_card:   state.wild_card ? 1 : 0,
+    attributes: {
+      agility:  document.getElementById('attr-agility').value,
+      smarts:   document.getElementById('attr-smarts').value,
+      spirit:   document.getElementById('attr-spirit').value,
+      strength: document.getElementById('attr-strength').value,
+      vigor:    document.getElementById('attr-vigor').value,
+    },
+    pace:         parseInt(document.getElementById('statPace').value)    || 0,
+    size:         parseInt(document.getElementById('statSize').value)    || 0,
+    wounds:       parseInt(document.getElementById('statWounds').value)  || 3,
+    power_points: parseInt(document.getElementById('statPowerPoints').value) || 0,
+    power_trapping: document.getElementById('powerTrapping').value || '',
+    parry:        parseInt(document.getElementById('statParry').value)   || 0,
+    toughness:    parseInt(document.getElementById('statToughness').value)|| 0,
+    pace_variant:      state.pace_variants.map(v => ({type:v.type, value:parseFloat(v.value)||0})),
+    parry_variant:     state.parry_variant     ? {type:state.parry_variant.type,     value:parseFloat(state.parry_variant.value)||0}     : null,
+    toughness_variant: state.toughness_variant ? {type:state.toughness_variant.type, value:parseFloat(state.toughness_variant.value)||0} : null,
+    skills,
+    edges:            state.edges.map(e => e.name),
+    hindrances,
+    powers:           state.powers.map(p => ({name: p.name})),
+    gear:             state.gear.filter(g => g.item),
+    special_abilities: state.special_abilities.filter(sa => sa.name),
+  };
+}
+
+function saveCreature() {
+  document.getElementById('creatureJson').value = JSON.stringify(buildCreatureJson());
+  const imgInput = document.getElementById('imageFileInput');
+  const formImg  = document.querySelector('input[name="image"]');
+  if (imgInput.files.length > 0 && formImg.files.length === 0) {
+    try { const dt=new DataTransfer(); dt.items.add(imgInput.files[0]); formImg.files=dt.files; } catch(e) {}
+  }
+  document.getElementById('creatureForm').submit();
+}
+
+function escHtml(str) {
+  return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.querySelectorAll('.section-header').forEach(h => {
+  h.addEventListener('click', () => h.closest('.section')?.classList.toggle('collapsed'));
+});
+
+
+
+init();
+</script>
+{% endblock %}
+{% endblock %}

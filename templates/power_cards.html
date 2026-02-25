@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Cartas de Poderes{% endblock %}
+
+{% block extra_styles %}
+<style>
+  body { background: #12100e; padding: 1.5rem; }
+
+  .cards-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .cards-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #c9a84c;
+    letter-spacing: 0.1em;
+  }
+  .cards-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: #6a5a30;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 0.2rem;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* ── CARTA ── */
+  .card {
+    background: linear-gradient(160deg, #2a1f0e 0%, #1a1208 60%, #221810 100%);
+    border: 1px solid #5a4020;
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(201,168,76,0.15);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.7), 0 0 20px rgba(201,168,76,0.1);
+  }
+
+  /* ── CABECERA CARTA ── */
+  .card-header {
+    background: linear-gradient(90deg, #3a1a0a 0%, #2a1408 100%);
+    border-bottom: 1px solid #5a4020;
+    padding: 0.7rem 0.9rem 0.6rem;
+    position: relative;
+  }
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0.9rem; right: 0.9rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+    opacity: 0.4;
+  }
+
+  .card-rank {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #c9a84c;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 0.2rem;
+  }
+  .card-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f0d898;
+    line-height: 1.2;
+  }
+  .card-name-original {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 0.78rem;
+    color: #8a7040;
+    margin-top: 0.1rem;
+  }
+
+  /* ── STATS ── */
+  .card-stats {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.5rem 0.9rem;
+    border-bottom: 1px solid #3a2c18;
+    background: rgba(0,0,0,0.2);
+  }
+  .card-stat {
+    text-align: center;
+    flex: 1;
+  }
+  .card-stat + .card-stat {
+    border-left: 1px solid #3a2c18;
+  }
+  .card-stat-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.55rem;
+    color: #7a6030;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+  }
+  .card-stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c9a84c;
+  }
+
+  /* ── DESCRIPCIÓN ── */
+  .card-body {
+    padding: 0.8rem 0.9rem;
+    flex: 1;
+  }
+  .card-description {
+    font-family: 'EB Garamond', serif;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #a09070;
+    text-align: justify;
+  }
+
+  /* ── MODIFICADORES ── */
+  .card-modifiers {
+    padding: 0.6rem 0.9rem 0.8rem;
+    border-top: 1px solid #3a2c18;
+    background: rgba(0,0,0,0.15);
+  }
+  .card-modifiers-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.58rem;
+    color: #7a6030;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.4rem;
+  }
+  .card-modifier {
+    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #8a7858;
+  }
+  .card-modifier-cost {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    color: #c9a84c;
+    font-size: 0.75rem;
+    margin-right: 0.3rem;
+  }
+  .card-modifier-title {
+    font-weight: 600;
+    color: #a09070;
+  }
+  .card-modifier-desc {
+    font-style: italic;
+    color: #706050;
+  }
+
+  /* ── PIE CARTA ── */
+  .card-footer {
+    padding: 0.35rem 0.9rem;
+    border-top: 1px solid #3a2c18;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-source {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    color: #5a4828;
+    letter-spacing: 0.05em;
+  }
+
+  .page-footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: #3a2c18;
+    letter-spacing: 0.15em;
+  }
+
+  @media (max-width: 600px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+  <header class="cards-header">
+    <div class="cards-title">✦ Cartas de Poderes ✦</div>
+    <div class="cards-subtitle">Referencia rápida</div>
+  </header>
+
+  <div class="cards-grid">
+    {% for power in powers %}
+    <div class="card">
+      <div class="card-header">
+        {% if power.rank_name %}<div class="card-rank">{{ power.rank_name }}</div>{% endif %}
+        <div class="card-name">{{ power.name }}</div>
+        {% if power.name_original %}<div class="card-name-original">{{ power.name_original }}</div>{% endif %}
+      </div>
+
+      {% if power.cost or power.range or power.range_roh or power.duration %}
+      <div class="card-stats">
+        {% if power.cost %}
+        <div class="card-stat">
+          <span class="card-stat-label">Coste</span>
+          <span class="card-stat-value">{{ power.cost }} PP</span>
+        </div>
+        {% endif %}
+        {% if power.range or power.range_roh %}
+        <div class="card-stat">
+          <span class="card-stat-label">Alcance</span>
+          <span class="card-stat-value">{{ power.range_roh or power.range }}</span>
+        </div>
+        {% endif %}
+        {% if power.duration %}
+        <div class="card-stat">
+          <span class="card-stat-label">Duración</span>
+          <span class="card-stat-value">{{ power.duration }}r</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if power.description %}
+      <div class="card-body">
+        <p class="card-description">{{ power.description }}</p>
+      </div>
+      {% endif %}
+
+      {% if power.modifiers %}
+      <div class="card-modifiers">
+        <div class="card-modifiers-label">✦ Modificadores</div>
+        {% for mod in power.modifiers %}
+        <div class="card-modifier">
+          <span class="card-modifier-cost">{{ mod.cost }}</span>
+          <span class="card-modifier-title">{{ mod.title }}:</span>
+          <span class="card-modifier-desc"> {{ mod.description }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="card-footer">
+        <span class="card-source">
+          {% if power.reference_book %}{{ power.reference_book.title }}{% if power.page_no %} p.{{ power.page_no }}{% endif %}{% endif %}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <footer class="page-footer">✦ &nbsp; Generado automáticamente &nbsp; ✦</footer>
+{% endblock %}

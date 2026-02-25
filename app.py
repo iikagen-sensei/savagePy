@@ -28,7 +28,7 @@ DOCUMENTS = {
         "docs": {
             "powers": {"label": "Manual de Poderes", "icon": "📖", "template": "powers_manual.html", "data_key": "powers"},
             "cards":        {"label": "Cartas de Poderes",        "icon": "🂠", "template": "power_cards.html",        "data_key": "powers"},
-            "cards_mobile": {"label": "Cartas Móvil",         "icon": "📱", "template": "power_cards_mobile.html", "data_key": "powers"},
+            "cards_mobile": {"label": "Cartas Móvil (PDF)",         "icon": "📱", "template": "power_cards_mobile.html", "data_key": "powers"},
         }
     },
     "edge": {
@@ -58,6 +58,14 @@ DOCUMENTS = {
         "icon": "🧙",
         "docs": {
             "character_sheet": {"label": "Ficha de Personaje", "icon": "📄", "template": "character_sheet.html", "data_key": None},
+        }
+    },
+
+    "treasure": {
+        "label": "Tesoros",
+        "icon": "💎",
+        "docs": {
+            "treasure_cards": {"label": "Tarjetas de Tesoro", "icon": "🃏", "template": "treasure_cards.html", "data_key": "treasures"},
         }
     },
 }
@@ -105,7 +113,7 @@ def render_document(doc_id: str, view_id: str | None = None) -> str:
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
     template = env.get_template(doc["template"])
-    return template.render(**{doc["data_key"]: data}, view_name=view_name)
+    return template.render(**{doc["data_key"]: data}, view_name=view_name, nocodb_url=NOCODB_URL)
 
 
 # ── RUTAS ──────────────────────────────────────────────────────────────────

@@ -89,4 +89,11 @@ TABLE_CONFIG = {
         "relations": []
     },
 
+    "treasure": {
+        "table_id": "m36nr536uiox6ev",
+        "view_id": None,        # las vistas pub:Inusual, pub:Excepcional... se seleccionan en la UI
+        "fields": ["name", "type", "stat", "description", "ability", "rarity", "image"],
+        "relations": []
+    },
+
 }

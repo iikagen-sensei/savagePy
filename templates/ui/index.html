@@ -1,0 +1,134 @@
+{% extends "ui/base.html" %}
+
+{% block title %}Savage Worlds · Generador{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Documentación de partidas</div>
+    <h1>Gran biblioteca<br>de los <strong>grimorios</strong></h1>
+  </div>
+</div>
+
+<div class="stats-strip">
+  {% for table_key, table in documents.items() %}
+  <div class="stat-item">
+    <span class="stat-n loading" id="count-{{ table_key }}">···</span>
+    <span class="stat-l">{{ table.label }}</span>
+  </div>
+  {% endfor %}
+</div>
+
+<main class="sw-main">
+  {% for table_key, table in documents.items() %}
+  <div class="doc-section">
+    <div class="section-head">
+      <span class="section-icon">{{ table.icon }}</span>
+      <span class="section-name">{{ table.label }}</span>
+      <span class="section-desc">
+        {%- if table_key == 'power' %}Manuales y cartas de referencia
+        {%- elif table_key == 'edge' %}Manuales y cartas de referencia
+        {%- elif table_key == 'hindrance' %}Manual de referencia
+        {%- elif table_key == 'character' %}Fichas de personaje para imprimir
+        {%- endif %}
+      </span>
+    </div>
+    <div class="view-row">
+      <span class="view-label">Vista</span>
+      <span class="view-loading" id="view-loading-{{ table_key }}">Cargando...</span>
+      <select class="view-select" id="view-{{ table_key }}" style="display:none">
+        <option value="">— Todas las vistas —</option>
+      </select>
+      <span class="view-error" id="view-error-{{ table_key }}" style="display:none">Error al cargar vistas</span>
+    </div>
+    <div class="docs-list">
+      {% if table_key == 'character' %}
+      <div class="doc-row">
+        <div class="doc-icon-wrap">📄</div>
+        <div class="doc-info">
+          <div class="doc-name">Fichas de Personaje</div>
+          <div class="doc-desc">Ficha completa A4 doble cara, lista para imprimir</div>
+        </div>
+        <div class="doc-actions">
+          <button class="btn btn-outline" onclick="openCharacters('preview','{{ table_key }}')">Ver</button>
+          <button class="btn btn-red"     onclick="openCharacters('pdf','{{ table_key }}')">↓ PDF</button>
+        </div>
+      </div>
+      {% else %}
+      {% for doc_id, doc in table.docs.items() %}
+      <div class="doc-row">
+        <div class="doc-icon-wrap">{{ doc.icon }}</div>
+        <div class="doc-info">
+          <div class="doc-name">{{ doc.label }}</div>
+          <div class="doc-desc">
+            {%- if 'manual' in doc_id %}Referencia completa con descripción
+            {%- elif 'mobile' in doc_id or 'móvil' in doc.label|lower %}Optimizado para teléfono (108×240mm)
+            {%- elif 'card' in doc_id %}Formato tarjeta para imprimir
+            {%- endif %}
+          </div>
+        </div>
+        <div class="doc-actions">
+          <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button>
+          {% if doc_id in docx_docs %}
+          <button class="btn btn-red" onclick="openDoc('docx','{{ doc_id }}','{{ table_key }}')">↓ Word</button>
+          {% else %}
+          <button class="btn btn-outline" onclick="openDoc('html','{{ doc_id }}','{{ table_key }}')">↓ HTML</button>
+          <button class="btn btn-red"     onclick="openDoc('pdf','{{ doc_id }}','{{ table_key }}')">↓ PDF</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</main>
+
+<div id="app-data" data-view-tables='{{ documents.keys() | list | tojson }}' style="display:none"></div>
+<div class="overlay" id="overlay"><div class="spinner"></div><div class="overlay-text" id="overlayTxt">Generando...</div></div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function showOverlay(txt){document.getElementById('overlayTxt').textContent=txt||'Generando...';document.getElementById('overlay').classList.add('active');}
+  function hideOverlay(){document.getElementById('overlay').classList.remove('active');}
+  function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show';setTimeout(()=>el.className='toast',3000);}
+  function openDoc(action,docId,tableKey){
+    const viewId=document.getElementById('view-'+tableKey)?.value||'';
+    const params=viewId?'?view_id='+encodeURIComponent(viewId):'';
+    if(action==='preview'){showOverlay('Generando previsualización...');window.open('/preview/'+docId+params,'_blank');setTimeout(hideOverlay,4000);}
+    else{const msg=action==='pdf'?'Generando PDF...':action==='docx'?'Generando Word...':'Generando HTML...';showOverlay(msg);window.location.href='/download/'+docId+'/'+action+params;setTimeout(hideOverlay,6000);}
+  }
+  function openCharacters(action,tableKey){
+    const viewId=document.getElementById('view-'+tableKey)?.value||'';
+    const params=viewId?'?view_id='+encodeURIComponent(viewId):'';
+    if(action==='preview'){showOverlay('Generando previsualización...');window.open('/preview/characters'+params,'_blank');setTimeout(hideOverlay,6000);}
+    else{showOverlay('Generando PDF...');window.location.href='/download/characters/pdf'+params;setTimeout(hideOverlay,6000);}
+  }
+  async function loadViews(tableKey){
+    const loading=document.getElementById('view-loading-'+tableKey);
+    const select=document.getElementById('view-'+tableKey);
+    const errEl=document.getElementById('view-error-'+tableKey);
+    try{
+      const res=await fetch('/api/views/'+tableKey);
+      if(!res.ok)throw new Error();
+      const views=await res.json();
+      views.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.title;select.appendChild(o);});
+      loading.style.display='none';select.style.display='';
+    }catch{loading.style.display='none';errEl.style.display='';}
+  }
+  async function loadCounts(){
+    try{
+      const res=await fetch('/api/status');const data=await res.json();
+      for(const[key,val]of Object.entries(data)){
+        const el=document.getElementById('count-'+key);
+        if(el){el.classList.remove('loading');el.textContent=val??'—';}
+      }
+    }catch{}
+  }
+  const VIEW_TABLE_KEYS=JSON.parse(document.getElementById('app-data').dataset.viewTables);
+  loadCounts();
+  VIEW_TABLE_KEYS.forEach(key=>loadViews(key));
+</script>
+{% endblock %}
