@@ -20,6 +20,7 @@ DOCUMENTS = {
                 "label":       "Cartas Tablet",
                 "icon":        "📱",
                 "description": "Optimizado para tablet (190×120mm)",
+                "image":       "images/relic01.png",
                 "template":    "documents/power_cards_tablet.html",
                 "data_key":    "powers",
             },
@@ -34,10 +35,20 @@ Los campos de cada documento:
 | Campo | Descripción |
 |---|---|
 | `label` | Nombre que aparece en la interfaz |
-| `icon` | Emoji que aparece junto al nombre |
+| `icon` | Emoji (no se usa visualmente, se mantiene por compatibilidad) |
 | `description` | Texto descriptivo visible bajo el nombre |
+| `image` | Imagen que aparece como icono en la lista (relativa a `static/`) |
 | `template` | Path del archivo HTML relativo a `templates/` |
 | `data_key` | Nombre de la variable con la que el template recibe los datos |
+
+**Imágenes disponibles en `static/images/`:**
+
+| Imagen | Uso recomendado |
+|---|---|
+| `book01`, `book02` | Manuales y documentos de referencia |
+| `banner01`, `banner02` | Cartas para imprimir |
+| `relic01`, `relic02` | Versiones móvil |
+| `letter01`, `letter02` | Fichas y documentos tipo hoja |
 
 **`data_key` según la tabla:**
 
@@ -48,6 +59,7 @@ Los campos de cada documento:
 | `hindrance` | `"hindrances"` |
 | `bestiary` | `"creatures"` |
 | `treasure` | `"treasures"` |
+| `rule` | `"rules"` |
 
 Una vez añadido, al reiniciar el servidor aparecerá en la interfaz con los botones Ver / ↓ PDF automáticamente.
 
@@ -109,8 +121,6 @@ El template recibe los datos bajo el nombre que definiste en `data_key`, más `v
 {{ view_name }}   {# nombre de la vista seleccionada #}
 ```
 
-Para ver todos los campos disponibles de cada tabla consulta directamente NocoDB, o inspecciona el primer registro en el servidor con `print()` temporal en `render_document()`.
-
 ---
 
 ## Paso 3 — Ajustar el tamaño de página en el CSS
@@ -168,6 +178,12 @@ Si creas un `bestiary_tablet` solo tienes que registrarlo en `DOCUMENTS["bestiar
 
 ---
 
+## Las reglas modulares son un caso especial
+
+El compendio de reglas (`rules`) genera el Word directamente con `python-docx` + `pypandoc` convirtiendo el contenido Markdown de cada regla. No usa plantilla `docxtpl`. El archivo `rules_template.docx` existe solo como marcador para que aparezca el botón ↓ Word en la interfaz.
+
+---
+
 ## Ejemplo completo: Bestiario Tablet
 
 ### 1. Registro en `config.py`
@@ -182,6 +198,7 @@ Si creas un `bestiary_tablet` solo tienes que registrarlo en `DOCUMENTS["bestiar
             "label":       "Bestiario Tablet",
             "icon":        "📱",
             "description": "Formato A5 apaisado para tablet",
+            "image":       "images/relic02.png",
             "template":    "documents/bestiary_tablet.html",
             "data_key":    "creatures",
         },
@@ -208,12 +225,8 @@ Si creas un `bestiary_tablet` solo tienes que registrarlo en `DOCUMENTS["bestiar
       display: grid;
       grid-template-columns: 80mm 1fr;
     }
-    .creature-image {
-      width: 80mm;
-      height: 148mm;
-      object-fit: cover;
-    }
-    .creature-body { padding: 8mm; }
+    .creature-image { width: 80mm; height: 148mm; object-fit: cover; }
+    .creature-body  { padding: 8mm; }
   </style>
 </head>
 <body>
@@ -266,7 +279,7 @@ WeasyPrint **no soporta**:
 ## Resumen rápido
 
 ```
-1. config.py → DOCUMENTS   añadir entrada con label, icon, description, template, data_key
+1. config.py → DOCUMENTS   añadir entrada con label, icon, description, image, template, data_key
 2. templates/documents/    crear el archivo HTML con @page y el bucle Jinja2
 3. Reiniciar servidor      el botón aparece solo
 ```

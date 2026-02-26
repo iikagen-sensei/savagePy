@@ -52,7 +52,7 @@
           <button class="btn btn-outline" onclick="openCharacters('preview','{{ table_key }}')">Ver</button>
           <button class="btn btn-red"     onclick="openCharacters('pdf','{{ table_key }}')">↓ PDF</button>
           {% elif doc_id in docx_docs %}
-          <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button>
+          {# <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button> #}
           <button class="btn btn-red"     onclick="openDoc('docx','{{ doc_id }}','{{ table_key }}')">↓ Word</button>
           {% else %}
           <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button>

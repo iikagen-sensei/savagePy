@@ -26,6 +26,7 @@
       <a href="/"           {% if request.path == '/'                    %}class="active"{% endif %}>Documentos</a>
       <a href="/characters" {% if request.path.startswith('/characters') %}class="active"{% endif %}>Personajes</a>
       <a href="/bestiary"   {% if request.path.startswith('/bestiary')   %}class="active"{% endif %}>Bestiario</a>
+      <a href="/rules"     {% if request.path.startswith('/rules')     %}class="active"{% endif %}>Reglas</a>
     </nav>
   </div>
 </header>

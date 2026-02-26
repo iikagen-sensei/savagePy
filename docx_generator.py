@@ -128,3 +128,78 @@ CONTEXT_BUILDERS = {
     "edges":      build_edges_context,
     "hindrances": build_hindrances_context,
 }
+
+
+def build_rules_docx(data: list, titulo: str = "Reglas", view_name: str = "") -> bytes:
+    """
+    Genera un .docx completo con todas las reglas convirtiendo el contenido
+    Markdown a Word con pypandoc. No usa plantilla — genera el documento por código
+    para preservar el formato enriquecido (negritas, tablas, listas, títulos).
+    """
+    import pypandoc
+    import tempfile
+    import os
+    from docx import Document
+    from docx.shared import Pt
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = Document()
+
+    # Título del documento
+    title = doc.add_heading(titulo, level=0)
+    if view_name:
+        sub = doc.add_paragraph(view_name)
+        sub.runs[0].italic = True
+
+    for rule in data:
+        # Encabezado de la regla
+        name = rule.get("name", "")
+        name_original = rule.get("name_original")
+        heading_text = f"{name} ({name_original})" if name_original else name
+        doc.add_heading(heading_text, level=1)
+
+        # Metadatos en una línea
+        meta_parts = []
+        source = rule.get("source")
+        if source:
+            meta_parts.append(source)
+        ref = rule.get("reference_book") or {}
+        ref_title = ref.get("title") if isinstance(ref, dict) else None
+        if ref_title:
+            page = rule.get("page_no")
+            meta_parts.append(f"{ref_title} p.{page}" if page else ref_title)
+        if meta_parts:
+            meta = doc.add_paragraph(" · ".join(meta_parts))
+            meta.runs[0].italic = True
+
+        # Descripción breve
+        description = rule.get("description")
+        if description:
+            desc = doc.add_paragraph(description)
+            desc.runs[0].bold = True
+
+        # Contenido Markdown → docx via pypandoc
+        content_md = rule.get("content")
+        if content_md:
+            with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+                tmp_path = tmp.name
+            try:
+                pypandoc.convert_text(
+                    content_md, "docx", format="md",
+                    outputfile=tmp_path,
+                    extra_args=["--standalone"]
+                )
+                # Extraer párrafos del docx generado e insertarlos
+                tmp_doc = Document(tmp_path)
+                for elem in tmp_doc.element.body:
+                    doc.element.body.append(elem)
+            finally:
+                os.unlink(tmp_path)
+
+        # Separador entre reglas
+        doc.add_paragraph()
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+

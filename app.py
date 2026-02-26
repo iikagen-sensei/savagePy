@@ -10,7 +10,7 @@ import tempfile
 import json
 import requests as req
 from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG, DOCUMENTS
-from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry
+from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry, get_rules, get_rule
 from jinja2 import Environment, FileSystemLoader
 
 app = Flask(__name__)
@@ -163,6 +163,20 @@ def download_docx(doc_id: str):
     template_path = DOCUMENTS_DIR / f"{doc_id}_template.docx"
     if not template_path.exists():
         return f"No existe plantilla Word para '{doc_id}'. Añade templates/{doc_id}_template.docx", 404
+
+    # Reglas: generación directa con python-docx + pypandoc, sin plantilla
+    if table_key == "rule":
+        from docx_generator import build_rules_docx
+        data = get_table(table_key, view_id=view_id)
+        view_name = _resolve_view_name(table_key, view_id)
+        docx_bytes = build_rules_docx(data, titulo=doc["label"], view_name=view_name)
+        filename = f"{doc_id}{'_' + view_name if view_name else ''}.docx"
+        return send_file(
+            io.BytesIO(docx_bytes),
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            as_attachment=True,
+            download_name=filename
+        )
 
     if table_key == "bestiary":
         data = get_bestiary_entries(view_id=view_id, full=True)
@@ -508,6 +522,84 @@ def form_data_bestiary():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+# ── GESTIÓN DE REGLAS ─────────────────────────────────────────────────────
+
+@app.route("/rules")
+def rules_list():
+    """Lista todas las reglas modulares."""
+    try:
+        rules = get_rules()
+    except Exception as e:
+        rules = []
+    return render_template("ui/rules.html", rules=rules)
+
+
+@app.route("/rules/new")
+def rule_new():
+    """Formulario de nueva regla."""
+    return render_template("ui/rule_form.html", record_id=None, rule=None)
+
+
+@app.route("/rules/<int:record_id>/edit")
+def rule_edit(record_id: int):
+    """Formulario de edición de regla existente."""
+    try:
+        rule = get_rule(record_id)
+    except Exception as e:
+        return f"Error al cargar regla: {e}", 500
+    return render_template("ui/rule_form.html", record_id=record_id, rule=rule)
+
+
+@app.route("/rules/save", methods=["POST"])
+def rule_save():
+    """Guarda o actualiza una regla en NocoDB."""
+    record_id = request.form.get("record_id") or None
+    cfg = TABLE_CONFIG["rule"]
+    headers = {"xc-token": API_TOKEN}
+
+    record_data = {
+        "name":          request.form.get("name", ""),
+        "name_original": request.form.get("name_original", ""),
+        "description":   request.form.get("description", ""),
+        "content":       request.form.get("content", ""),
+        "source":        request.form.get("source", "Casera"),
+        "icon":          request.form.get("icon", ""),
+        "page_no":       request.form.get("page_no", "") or None,
+    }
+
+    try:
+        url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records"
+        if record_id:
+            record_data["Id"] = int(record_id)
+            r = req.patch(url, headers=headers, json=record_data)
+        else:
+            r = req.post(url, headers=headers, json=record_data)      
+        r.raise_for_status()
+    except Exception as e:
+        return f"Error al guardar: {e}", 500
+
+
+    return redirect(url_for("rules_list"))
+
+
+@app.route("/rules/<int:record_id>/delete", methods=["POST"])
+def rule_delete(record_id: int):
+    """Elimina una regla."""
+    cfg = TABLE_CONFIG["rule"]
+    headers = {"xc-token": API_TOKEN}
+    try:
+        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                       headers=headers, json={"Id": record_id})
+        r.raise_for_status()
+    except Exception as e:
+        return f"Error al eliminar: {e}", 500
+    return redirect(url_for("rules_list"))
+
+
+# ── GLOSARIO ───────────────────────────────────────────────────────────────
+
 @app.route("/glosario")
 def glosario():
     tabs = [
@@ -519,8 +611,10 @@ def glosario():
     data = {}
     for key, _ in tabs:
         records = get_table(key)
-        data[key] = [{"name": r.get("name") or r.get("title") or "", "name_original": r.get("name_original")} for r in records]
-        # data[key] = [{"name": r.get("name") or "", "name_original": r.get("name_original")} for r in records if r.get("name")]
+        data[key] = [
+            {"name": r.get("name") or "", "name_original": r.get("name_original")}
+            for r in records if r.get("name")
+        ]
     return render_template("ui/glosario.html", tabs=tabs, data=data)
 
 

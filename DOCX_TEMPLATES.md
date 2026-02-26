@@ -15,6 +15,8 @@ El motor es **docxtpl** (versión ≥ 0.16), que usa la misma sintaxis que Jinja
 
 El botón **↓ Word** aparece automáticamente en la interfaz para cualquier documento que tenga su `_template.docx` correspondiente en `templates/documents/`.
 
+**Excepción — Reglas modulares**: el compendio de reglas se genera con `python-docx` + `pypandoc` convirtiendo el Markdown directamente. No usa `docxtpl`. El archivo `rules_template.docx` existe solo como marcador para activar el botón Word. Ver la sección correspondiente al final de este documento.
+
 ---
 
 ## Sintaxis de marcadores
@@ -157,7 +159,7 @@ Cada `entrada` dentro de `bloque.entradas`:
 | `{{ entrada.nombre }}` | formateado | nombre (+ original si existe) |
 | `{{ entrada.fuente }}` | formateado | libro y página |
 | `{{ entrada.descripcion }}` | formateado | descripción |
-| `{{ entrada.Nombre }}` | crudo | nombre en castellano |
+| `{{ entrada.name }}` | crudo | nombre en castellano |
 | `{{ entrada.name_original }}` | crudo | nombre original |
 | `{{ entrada.type }}` | crudo | Mayor / Menor |
 | `{{ entrada.page_no }}` | crudo | número de página |
@@ -195,6 +197,27 @@ Los párrafos con `{% for %}` y `{% endfor %}` desaparecen del resultado, así q
 1. Crea `templates/documents/<doc_id>_template.docx` donde `doc_id` es el identificador del documento (`powers`, `edges`, `bestiary_mobile`…)
 2. El botón **↓ Word** aparecerá automáticamente en la interfaz al reiniciar el servidor
 3. Si el documento necesita preparación de datos especial, añade un `build_<doc_id>_context()` en `docx_generator.py`; si no, el sistema pasa los datos en crudo
+
+---
+
+## Reglas modulares — generación especial
+
+El compendio de reglas no usa `docxtpl` porque el contenido de cada regla está en Markdown y `docxtpl` no puede renderizarlo con formato enriquecido dentro de un bucle.
+
+En su lugar, `build_rules_docx()` en `docx_generator.py` genera el `.docx` completo por código:
+
+1. Crea un documento `python-docx` vacío
+2. Para cada regla, convierte el Markdown a un `.docx` temporal con `pypandoc`
+3. Extrae los elementos del temporal y los inserta en el documento principal
+4. Devuelve el `.docx` final con todas las reglas
+
+El resultado preserva toda la estructura (H2, H3, negrita, tablas, listas) con los estilos nativos de Word, listo para aplicar estilos propios en cualquier procesador de texto.
+
+**Requisitos adicionales:**
+```bash
+sudo apt install pandoc
+pip install pypandoc --break-system-packages
+```
 
 ---
 

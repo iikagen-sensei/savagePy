@@ -272,6 +272,24 @@ def get_bestiary_entry(record_id: int) -> dict:
 
     return {"creature": creature, "image_url": image_url}
 
+
+def get_rules(view_id: str | None = None) -> list[dict]:
+    """Devuelve lista de reglas modulares."""
+    cfg = TABLE_CONFIG["rule"]
+    effective_view_id = view_id or cfg.get("view_id")
+    records = _get_records(cfg["table_id"], effective_view_id, cfg.get("fields"))
+    return records
+
+
+def get_rule(record_id: int) -> dict:
+    """Devuelve una regla completa por Id."""
+    cfg = TABLE_CONFIG["rule"]
+    url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records/{record_id}"
+    r = requests.get(url, headers=HEADERS)
+    r.raise_for_status()
+    return r.json()
+
+
 if __name__ == "__main__":
     import json
     import sys

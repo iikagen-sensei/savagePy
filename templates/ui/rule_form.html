@@ -1,0 +1,175 @@
+{% extends "ui/base.html" %}
+
+{% block title %}{{ 'Editar' if record_id else 'Nueva' }} regla · Savage Worlds{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+<style>
+  .emoji-wrap { position:relative; display:flex; align-items:center; gap:0.5rem; }
+  .emoji-preview { font-size:2rem; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); background:var(--bg); cursor:pointer; flex-shrink:0; }
+  .emoji-preview:hover { border-color:var(--red); }
+  .emoji-input { flex:1; font-size:1.1rem; }
+  .emoji-picker-wrap { position:absolute; top:calc(100% + 4px); left:0; z-index:200; display:none; }
+  .emoji-picker-wrap.open { display:block; }
+  em-emoji-picker { --border-radius:0; --category-icon-size:18px; height:350px; }
+</style>
+{% endblock %}
+
+{% block header_extra %}
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Reglas modulares</div>
+    <h1>{{ 'Editar' if record_id else 'Nueva' }} <strong>regla</strong></h1>
+  </div>
+</div>
+<div class="save-bar">
+  <span class="save-bar-title">{{ rule.name if rule and rule.name else 'Nueva regla' }}</span>
+  <div class="save-bar-actions">
+    <a class="btn btn-ghost" href="/rules">← Volver</a>
+    <button class="btn btn-solid" onclick="document.getElementById('ruleForm').submit()">Guardar</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block body %}
+<form id="ruleForm" method="POST" action="/rules/save">
+  <input type="hidden" name="record_id" value="{{ record_id or '' }}">
+
+  <div class="form-layout">
+
+    <!-- ── CUERPO ── -->
+    <div class="form-sections">
+
+      <div class="section">
+        <div class="section-header form-section-head">Descripción breve</div>
+        <div class="section-body form-section-body">
+          <input class="form-input" type="text" name="description"
+                 value="{{ rule.description or '' if rule else '' }}"
+                 placeholder="Una línea describiendo la regla" style="width:100%">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header form-section-head">Contenido</div>
+        <div class="section-body form-section-body">
+          <textarea name="content" id="editor">{{ rule.content or '' if rule else '' }}</textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── SIDEBAR ── -->
+    <div class="form-sidebar">
+
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-head">Datos básicos</div>
+        <div class="sidebar-panel-body">
+
+          <div class="field">
+            <label>Nombre *</label>
+            <input class="form-input" type="text" name="name"
+                   value="{{ rule.name or '' if rule else '' }}" required style="width:100%">
+          </div>
+
+          <div class="field" style="margin-top:0.8rem">
+            <label>Nombre original</label>
+            <input class="form-input" type="text" name="name_original"
+                   value="{{ rule.name_original or '' if rule else '' }}" style="width:100%">
+          </div>
+
+          <div class="field" style="margin-top:0.8rem">
+            <label>Origen</label>
+            <select class="form-input" name="source" id="sourceSelect" style="width:100%"
+                    onchange="togglePageNo()">
+              {% for opt in ['Oficial', 'Terceros', 'Propio'] %}
+              <option value="{{ opt }}" {% if rule and rule.source == opt %}selected{% endif %}>{{ opt }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field" id="pageNoField" style="margin-top:0.8rem; display:none">
+            <label>Página</label>
+            <input class="form-input" type="text" name="page_no"
+                   value="{{ rule.page_no or '' if rule else '' }}" style="width:80px">
+          </div>
+
+        </div>
+      </div>
+
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-head">Icono</div>
+        <div class="sidebar-panel-body">
+          <div class="emoji-wrap" id="emojiWrap">
+            <div class="emoji-preview" id="emojiPreview" onclick="togglePicker()">{{ rule.icon if rule and rule.icon else '📜' }}</div>
+            <input class="form-input emoji-input" type="text" name="icon" id="emojiInput"
+                   value="{{ rule.icon or '' if rule and rule.icon else '' }}"
+                   placeholder="📜" maxlength="4"
+                   oninput="document.getElementById('emojiPreview').textContent=this.value||'📜'">
+            <div class="emoji-picker-wrap" id="emojiPicker"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-mart@5/dist/browser.js"></script>
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<script>
+new EasyMDE({
+  element: document.getElementById('editor'),
+  spellChecker: false,
+  autosave: { enabled: false },
+  toolbar: [
+    'bold', 'italic', '|',
+    'heading-2', 'heading-3', '|',
+    'unordered-list', 'ordered-list', '|',
+    'table', '|',
+    'preview', 'side-by-side', 'fullscreen'
+  ],
+  minHeight: '400px',
+});
+
+// ── Página condicional ─────────────────────────────────────────────────────
+function togglePageNo() {
+  const source = document.getElementById('sourceSelect').value;
+  document.getElementById('pageNoField').style.display = source === 'Oficial' ? '' : 'none';
+}
+togglePageNo();
+
+// ── Emoji picker con emoji-mart ────────────────────────────────────────────
+let pickerInstance = null;
+
+function togglePicker() {
+  const wrap = document.getElementById('emojiPicker');
+  if (wrap.classList.contains('open')) { closePicker(); return; }
+  if (!pickerInstance) {
+    pickerInstance = new EmojiMart.Picker({
+      onEmojiSelect: (emoji) => {
+        document.getElementById('emojiInput').value = emoji.native;
+        document.getElementById('emojiPreview').textContent = emoji.native;
+        closePicker();
+      },
+      theme: 'light',
+      set: 'native',
+      locale: 'en',
+      previewPosition: 'none',
+      skinTonePosition: 'none',
+    });
+    wrap.appendChild(pickerInstance);
+  }
+  wrap.classList.add('open');
+}
+
+function closePicker() {
+  document.getElementById('emojiPicker').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('emojiWrap').contains(e.target)) closePicker();
+});
+</script>
+{% endblock %}

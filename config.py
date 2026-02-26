@@ -92,7 +92,14 @@ TABLE_CONFIG = {
         "view_id": "vwyr4wd409u36rbv",
         "fields": ["name", "type", "stat", "description", "ability", "rarity", "image"],
         "relations": []
-    }
+    },
+
+    "rule": {
+        "table_id": "mrswhf1k48zeu70",
+        "view_id": "vwd3oesva04hk2kn",
+        "fields": ["name", "name_original", "description", "content", "source", "icon", "page_no", "reference_book"],
+        "relations": []
+    },
 
 }
 
@@ -231,6 +238,22 @@ DOCUMENTS = {
                 "image": "images/banner01.jpg",
                 "template": "documents/treasure_cards.html",
                 "data_key": "treasures",
+            },
+        }
+    },
+    "rule": {
+        "label": "Reglas",
+        "icon": "⚖",
+        "description": "Reglas modulares y opcionales",
+        "image": "images/rule.jpg",
+        "docs": {
+            "rules": {
+                "label": "Compendio de Reglas",
+                "icon": "📖",
+                "description": "Reglas modulares activas para la campaña",
+                "image": "images/book01.jpg",
+                "template": "documents/rules_manual.html",
+                "data_key": "rules",
             },
         }
     },
