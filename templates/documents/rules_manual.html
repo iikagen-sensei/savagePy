@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    /* ── PÁGINA ─────────────────────────────────────────────── */
+    @page {
+      size: 210mm 297mm;
+      margin: 18mm 20mm 20mm 20mm;
+      @bottom-center {
+        content: counter(page);
+        font-family: 'EB Garamond', serif;
+        font-size: 8pt;
+        color: #aaa;
+      }
+    }
+
+    /* ── BASE ───────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'EB Garamond', serif;
+      font-size: 11pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+    /* ── CABECERA DEL DOCUMENTO ─────────────────────────────── */
+    .doc-header {
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 6mm;
+      margin-bottom: 10mm;
+    }
+    .doc-title {
+      font-family: 'Cinzel', serif;
+      font-size: 22pt;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #1a1a1a;
+      line-height: 1.1;
+    }
+    .doc-subtitle {
+      font-size: 9pt;
+      color: #888;
+      font-style: italic;
+      margin-top: 2mm;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── REGLA ──────────────────────────────────────────────── */
+    .rule {
+      margin-bottom: 10mm;
+    }
+    .rule-name {
+      page-break-after: avoid;
+    }
+      font-family: 'Cinzel', serif;
+      font-size: 13pt;
+      font-weight: 700;
+      color: #1a1a1a;
+      border-left: 3px solid #836237;
+      padding-left: 3mm;
+      margin-bottom: 3mm;
+      line-height: 1.2;
+    }
+    .rule-name-original {
+      font-family: 'EB Garamond', serif;
+      font-size: 9.5pt;
+      font-weight: 400;
+      color: #999;
+      font-style: italic;
+      margin-left: 2mm;
+    }
+
+    /* Descripción con efecto de comillas tipográficas */
+    .rule-description {
+      position: relative;
+      margin: 0 0 4mm 0;
+      padding: 2mm 5mm 2mm 8mm;
+      font-style: italic;
+      font-size: 10.5pt;
+      color: #444;
+      line-height: 1.5;
+    }
+    .rule-description::before {
+      content: '\201C';
+      position: absolute;
+      top: -3mm;
+      left: 0;
+      font-family: 'EB Garamond', serif;
+      font-size: 40pt;
+      color: #836237;
+      opacity: 0.35;
+      line-height: 1;
+    }
+    .rule-description::after {
+      content: '\201D';
+      font-family: 'EB Garamond', serif;
+      font-size: 20pt;
+      color: #836237;
+      opacity: 0.35;
+      line-height: 0;
+      vertical-align: -6pt;
+      margin-left: 1mm;
+    }
+
+    /* Contenido Markdown renderizado */
+    .rule-content {
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #1a1a1a;
+    }
+    .rule-content h2 {
+      font-family: 'Cinzel', serif;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #836237;
+      margin: 4mm 0 1.5mm 0;
+      letter-spacing: 0.03em;
+    }
+    .rule-content h3 {
+      font-family: 'EB Garamond', serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      font-style: italic;
+      color: #1a1a1a;
+      margin: 3mm 0 1mm 0;
+    }
+    .rule-content p {
+      margin-bottom: 2mm;
+    }
+    .rule-content ul,
+    .rule-content ol {
+      margin: 1.5mm 0 2mm 5mm;
+    }
+    .rule-content li {
+      margin-bottom: 1mm;
+    }
+    .rule-content strong {
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .rule-content em {
+      font-style: italic;
+    }
+    .rule-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 3mm 0;
+      font-size: 10pt;
+    }
+    .rule-content th {
+      background: #836237;
+      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: 8.5pt;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 1.5mm 2mm;
+      text-align: left;
+    }
+    .rule-content td {
+      padding: 1.5mm 2mm;
+      border-bottom: 0.5pt solid #ddd;
+      vertical-align: top;
+    }
+    .rule-content tr:last-child td {
+      border-bottom: none;
+    }
+    .rule-content tr:nth-child(even) td {
+      background: #f9f6f1;
+    }
+
+    /* Firma / referencia */
+    .rule-ref {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #aaa;
+      font-style: italic;
+      margin-top: 3mm;
+      letter-spacing: 0.05em;
+    }
+
+    /* Separador entre reglas */
+    .rule-divider {
+      border: none;
+      border-top: 0.5pt solid #ddd;
+      margin: 8mm 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="doc-title">Reglas Modulares</div>
+  {% if view_name %}
+  <div class="doc-subtitle">{{ view_name }}</div>
+  {% endif %}
+</div>
+
+{% for rule in rules %}
+<div class="rule">
+
+  <div class="rule-name">
+    {{ rule.name }}
+    {% if rule.name_original %}
+    <span class="rule-name-original">({{ rule.name_original }})</span>
+    {% endif %}
+  </div>
+
+  {% if rule.description %}
+  <div class="rule-description">{{ rule.description }}</div>
+  {% endif %}
+
+  {% if rule.content %}
+  <div class="rule-content">{{ rule.content | markdown }}</div>
+  {% endif %}
+
+  <div class="rule-ref">
+    {% if rule.source == 'Oficial' %}
+      {% set ref = rule.reference_book %}
+      {% if ref and ref.title %}
+        {{ ref.title }}{% if rule.page_no %} p.{{ rule.page_no }}{% endif %}
+      {% else %}
+        Oficial
+      {% endif %}
+    {% elif rule.source == 'Terceros' %}
+      Terceros
+    {% else %}
+      Propio
+    {% endif %}
+  </div>
+
+</div>
+{% if not loop.last %}<hr class="rule-divider">{% endif %}
+{% endfor %}
+
+</body>
+</html>

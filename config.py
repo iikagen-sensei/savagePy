@@ -39,7 +39,14 @@ TABLE_CONFIG = {
         "view_id": "vwblot2ljkdf3938",
         "fields": ["name", "name_original", "traits"],
         "relations": []
-    },    
+    },
+
+    "reference_book": {
+        "table_id": "mlryzqjacylgxzm",
+        "view_id": "vw8heesccct7o7r1",
+        "fields": ["title", "description"],
+        "relations": []
+    },   
 
     "power": {
         "table_id": "mx88eizkev8cy9i",
@@ -120,22 +127,34 @@ TABLE_CONFIG = {
 #   template    : archivo HTML en templates/documents/
 #   data_key    : nombre de la variable que recibe los datos en el template
 #
+
 DOCUMENTS = {
     "power": {
         "label": "Poderes",
         "icon": "✦",
         "description": "Capacidades extraordinarias que permiten ejecutar efectos asombrosos",
         "image": "images/power.jpg",
-        "docs": {
-            "powers": {
+        "docs": [
+            {
+                "id": "powers_print",
                 "label": "Manual de Poderes",
                 "icon": "📖",
-                "description": "Referencia completa con descripción y modificadores",
+                "description": "Formato PDF en A4 para imprimir",
                 "image": "images/book01.jpg",
                 "template": "documents/powers_manual.html",
                 "data_key": "powers",
             },
-            "cards": {
+            {
+                "id": "powers_manual_docx",
+                "label": "Manual de Poderes (Word)",
+                "icon": "📖",
+                "description": "Documento en Word para editar y aplicar estilos propios",
+                "image": "images/book01.jpg",
+                "template": "documents/powers_template.docx",
+                "data_key": "powers",
+            },
+            {
+                "id": "cards",
                 "label": "Cartas de Poderes",
                 "icon": "🂠",
                 "description": "Formato tarjeta para imprimir",
@@ -143,7 +162,8 @@ DOCUMENTS = {
                 "template": "documents/power_cards.html",
                 "data_key": "powers",
             },
-            "cards_mobile": {
+            {
+                "id": "cards_mobile",
                 "label": "Cartas Móvil",
                 "icon": "📱",
                 "description": "Optimizado para teléfono (108×240mm)",
@@ -151,23 +171,16 @@ DOCUMENTS = {
                 "template": "documents/power_cards_mobile.html",
                 "data_key": "powers",
             },
-        }
+        ]
     },
     "edge": {
         "label": "Ventajas",
         "icon": "⚔",
         "description": "Aptitudes y rasgos extraordinarios de los personajes",
         "image": "images/edge.jpg",
-        "docs": {
-            "edges": {
-                "label": "Manual de Ventajas",
-                "icon": "📖",
-                "description": "Referencia completa con descripción",
-                "image": "images/book01.jpg",
-                "template": "documents/edges_manual.html",
-                "data_key": "edges",
-            },
-            "edge_cards_mobile": {
+        "docs": [
+            {
+                "id": "edge_cards_mobile",
                 "label": "Cartas Móvil",
                 "icon": "📱",
                 "description": "Optimizado para teléfono (108×240mm)",
@@ -175,31 +188,33 @@ DOCUMENTS = {
                 "template": "documents/edge_cards_mobile.html",
                 "data_key": "edges",
             },
-        }
+        ]
     },
     "hindrance": {
         "label": "Desventajas",
         "icon": "☠",
         "description": "Rasgos negativos que impulsan el drama",
         "image": "images/hindrance.jpg",
-        "docs": {
-            "hindrances": {
+        "docs": [
+            {
+                "id": "hindrances",
                 "label": "Manual de Desventajas",
                 "icon": "📖",
-                "description": "Referencia completa con descripción",
+                "description": "Documento en Word para editar y aplicar estilos propios",
                 "image": "images/book01.jpg",
-                "template": "documents/hindrances_manual.html",
+                "template": "documents/hindrances_template.docx",
                 "data_key": "hindrances",
             },
-        }
+        ]
     },
     "character": {
         "label": "Personajes",
         "icon": "🧙",
         "description": "Héroes que pueblan un mundo de aventuras",
         "image": "images/character.jpg",
-        "docs": {
-            "character_sheet": {
+        "docs": [
+            {
+                "id": "character_sheet",
                 "label": "Ficha de Personaje",
                 "icon": "📄",
                 "description": "Ficha completa A4 doble cara, lista para imprimir",
@@ -207,15 +222,16 @@ DOCUMENTS = {
                 "template": "documents/character_sheet.html",
                 "data_key": None,
             },
-        }
+        ]
     },
     "bestiary": {
         "label": "Bestiario",
         "icon": "🐉",
         "description": "Criaturas y bestias antagonistas",
         "image": "images/bestiary.jpg",
-        "docs": {
-            "bestiary_mobile": {
+        "docs": [
+            {
+                "id": "bestiary_mobile",
                 "label": "Bestiario Móvil",
                 "icon": "📱",
                 "description": "Optimizado para teléfono (108×240mm)",
@@ -223,15 +239,16 @@ DOCUMENTS = {
                 "template": "documents/bestiary_mobile.html",
                 "data_key": "creatures",
             },
-        }
+        ]
     },
     "treasure": {
         "label": "Tesoros",
         "icon": "💎",
         "description": "Reliquias y objetos de gran relevancia",
         "image": "images/treasure.jpg",
-        "docs": {
-            "treasure_cards": {
+        "docs": [
+            {
+                "id": "treasure_cards",
                 "label": "Tarjetas de Tesoro",
                 "icon": "🃏",
                 "description": "Formato tarjeta para imprimir (64×89mm)",
@@ -239,22 +256,32 @@ DOCUMENTS = {
                 "template": "documents/treasure_cards.html",
                 "data_key": "treasures",
             },
-        }
+        ]
     },
     "rule": {
         "label": "Reglas",
         "icon": "⚖",
         "description": "Reglas modulares y opcionales",
         "image": "images/rule.jpg",
-        "docs": {
-            "rules": {
+        "docs": [
+            {
+                "id": "rules",
                 "label": "Compendio de Reglas",
                 "icon": "📖",
-                "description": "Reglas modulares activas para la campaña",
+                "description": "Formato en Word para editar y aplicar estilos propios",
                 "image": "images/book01.jpg",
+                "template": "documents/rules_template.md",
+                "data_key": "rules",
+            },
+            {
+                "id": "rules_print",
+                "label": "Compendio de Reglas",
+                "icon": "📝",
+                "description": "Formato PDF en A4 para imprimir",
+                "image": "images/book02.jpg",
                 "template": "documents/rules_manual.html",
                 "data_key": "rules",
             },
-        }
-    },
+        ]
+    },    
 }

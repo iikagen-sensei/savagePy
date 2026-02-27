@@ -38,7 +38,8 @@
       <span class="view-error" id="view-error-{{ table_key }}" style="display:none">Error al cargar vistas</span>
     </div>
     <div class="docs-list">
-      {% for doc_id, doc in table.docs.items() %}
+      {% for doc in table.docs %}
+      {% set ext = doc.template.split('.')[-1] %}
       <div class="doc-row">
         <div class="doc-icon-wrap">
           <img src="{{ url_for('static', filename=doc.image) }}" alt="{{ doc.label }}">
@@ -49,15 +50,13 @@
         </div>
         <div class="doc-actions">
           {% if table_key == 'character' %}
-          <button class="btn btn-outline" onclick="openCharacters('preview','{{ table_key }}')">Ver</button>
-          <button class="btn btn-red"     onclick="openCharacters('pdf','{{ table_key }}')">↓ PDF</button>
-          {% elif doc_id in docx_docs %}
-          {# <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button> #}
-          <button class="btn btn-red"     onclick="openDoc('docx','{{ doc_id }}','{{ table_key }}')">↓ Word</button>
-          {% else %}
-          <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ table_key }}')">Ver</button>
-          <button class="btn btn-outline" onclick="openDoc('html','{{ doc_id }}','{{ table_key }}')">↓ HTML</button>
-          <button class="btn btn-red"     onclick="openDoc('pdf','{{ doc_id }}','{{ table_key }}')">↓ PDF</button>
+            <button class="btn btn-outline" onclick="openCharacters('preview','{{ table_key }}')">Ver</button>
+            <button class="btn btn-red"     onclick="openCharacters('pdf','{{ table_key }}')">↓ PDF</button>
+          {% elif ext == 'html' %}
+            <button class="btn btn-outline" onclick="openDoc('preview','{{ doc.id }}','{{ table_key }}')">Ver</button>
+            <button class="btn btn-red"     onclick="openDoc('pdf','{{ doc.id }}','{{ table_key }}')">↓ PDF</button>
+          {% elif ext == 'docx' or ext == 'md' %}
+            <button class="btn btn-red"     onclick="openDoc('docx','{{ doc.id }}','{{ table_key }}')">↓ Word</button>
           {% endif %}
         </div>
       </div>
@@ -119,11 +118,5 @@
   const VIEW_TABLE_KEYS=JSON.parse(document.getElementById('app-data').dataset.viewTables);
   loadCounts();
   VIEW_TABLE_KEYS.forEach(key=>loadViews(key));
-
-  function goToCharacters(tableKey) {
-      const viewId = document.getElementById('view-' + tableKey)?.value || '';
-      const params = viewId ? '?view_id=' + encodeURIComponent(viewId) : '';
-      window.location.href = '/characters' + params;
-  }  
 </script>
 {% endblock %}

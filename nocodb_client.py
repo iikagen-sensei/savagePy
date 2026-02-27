@@ -164,11 +164,6 @@ def get_character(record_id: int) -> dict:
     r.raise_for_status()
     record = r.json()
 
-    record = r.json()
-    print("RECORD KEYS:", record.keys())
-    print("DATA TYPE:", type(record.get("data")))
-    print("DATA VALUE:", str(record.get("data"))[:100])        
-
     # Parsear el campo data (llega como string aunque sea tipo JSON en NocoDB)
     raw_data = record.get("data") or "{}"
     if isinstance(raw_data, str):
@@ -272,6 +267,16 @@ def get_bestiary_entry(record_id: int) -> dict:
 
     return {"creature": creature, "image_url": image_url}
 
+
+
+
+def get_reference_books() -> list[dict]:
+    """Devuelve lista de libros de referencia (Id, title, description)."""
+    url = f"{NOCODB_URL}/api/v2/tables/mlryzqjacylgxzm/records"
+    params = {"viewId": "vw8heesccct7o7r1", "fields": "Id,title,description", "limit": 100}
+    r = requests.get(url, headers=HEADERS, params=params)
+    r.raise_for_status()
+    return r.json().get("list", [])
 
 def get_rules(view_id: str | None = None) -> list[dict]:
     """Devuelve lista de reglas modulares."""

@@ -34,6 +34,8 @@
 {% block body %}
 <form id="ruleForm" method="POST" action="/rules/save">
   <input type="hidden" name="record_id" value="{{ record_id or '' }}">
+  <input type="hidden" name="reference_book_id" id="referenceBookId"
+         value="{{ rule.reference_book.Id if rule and rule.reference_book else '' }}">
 
   <div class="form-layout">
 
@@ -80,10 +82,18 @@
           <div class="field" style="margin-top:0.8rem">
             <label>Origen</label>
             <select class="form-input" name="source" id="sourceSelect" style="width:100%"
-                    onchange="togglePageNo()">
+                    onchange="toggleRefFields()">
               {% for opt in ['Oficial', 'Terceros', 'Propio'] %}
               <option value="{{ opt }}" {% if rule and rule.source == opt %}selected{% endif %}>{{ opt }}</option>
               {% endfor %}
+            </select>
+          </div>
+
+          <div id="refBookField" style="margin-top:0.8rem; display:none">
+            <label class="field">Libro de referencia</label>
+            <select class="form-input" id="refBookSelect" style="width:100%; margin-top:0.3rem"
+                    onchange="document.getElementById('referenceBookId').value=this.value">
+              <option value="">— Sin libro —</option>
             </select>
           </div>
 
@@ -133,14 +143,42 @@ new EasyMDE({
   minHeight: '400px',
 });
 
-// ── Página condicional ─────────────────────────────────────────────────────
-function togglePageNo() {
-  const source = document.getElementById('sourceSelect').value;
-  document.getElementById('pageNoField').style.display = source === 'Oficial' ? '' : 'none';
-}
-togglePageNo();
+// ── Libros de referencia ──────────────────────────────────────────────────
+const CURRENT_BOOK_ID = {{ (rule.reference_book.Id | string) if rule and rule.reference_book else 'null' }};
+let books = [];
 
-// ── Emoji picker con emoji-mart ────────────────────────────────────────────
+async function loadBooks() {
+  try {
+    const res = await fetch('/api/form-data/rules');
+    const data = await res.json();
+    books = data.books || [];
+    const sel = document.getElementById('refBookSelect');
+    books.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.Id;
+      opt.textContent = b.title + (b.description ? ` — ${b.description}` : '');
+      if (b.Id === CURRENT_BOOK_ID) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    if (CURRENT_BOOK_ID) {
+      document.getElementById('referenceBookId').value = CURRENT_BOOK_ID;
+    }
+  } catch(e) {
+    console.error('Error cargando libros:', e);
+  }
+}
+
+function toggleRefFields() {
+  const source = document.getElementById('sourceSelect').value;
+  const showRef = source === 'Oficial' || source === 'Terceros';
+  document.getElementById('refBookField').style.display = showRef ? '' : 'none';
+  document.getElementById('pageNoField').style.display  = showRef ? '' : 'none';
+}
+
+loadBooks();
+toggleRefFields();
+
+// ── Emoji picker ──────────────────────────────────────────────────────────
 let pickerInstance = null;
 
 function togglePicker() {

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: 210mm 297mm;
+      margin: 18mm 20mm 20mm 20mm;
+      @bottom-center {
+        content: counter(page);
+        font-family: 'EB Garamond', serif;
+        font-size: 8pt;
+        color: #aaa;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'EB Garamond', serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a1a;
+      background: #fff;
+      columns: 2;
+      column-gap: 10mm;
+    }
+
+    .doc-header {
+      column-span: all;
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 5mm;
+      margin-bottom: 8mm;
+    }
+    .doc-title {
+      font-family: 'Cinzel', serif;
+      font-size: 20pt;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .doc-subtitle {
+      font-size: 9pt;
+      color: #888;
+      font-style: italic;
+      margin-top: 2mm;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tag {
+      break-inside: avoid;
+      margin-bottom: 6mm;
+    }
+
+    .tag-name {
+      font-family: 'Cinzel', serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1a1a1a;
+      border-left: 3px solid #836237;
+      padding-left: 2.5mm;
+      margin-bottom: 2mm;
+      line-height: 1.2;
+    }
+
+    .tag-powers {
+      font-size: 10pt;
+      color: #333;
+      padding-left: 5.5mm;
+      line-height: 1.6;
+    }
+
+    {% if tag.comment %}
+    .tag-comment {
+      font-size: 9pt;
+      color: #888;
+      font-style: italic;
+      padding-left: 5.5mm;
+      margin-top: 1mm;
+    }
+    {% endif %}
+  </style>
+</head>
+<body>
+
+<div class="doc-header">
+  <div class="doc-title">Poderes por Trasfondo</div>
+  {% if view_name %}
+  <div class="doc-subtitle">{{ view_name }}</div>
+  {% endif %}
+</div>
+
+{% for tag in tags %}
+<div class="tag">
+  <div class="tag-name">{{ tag.name }}</div>
+  <div class="tag-powers">{{ tag.power_names | join(', ') }}</div>
+  {% if tag.comment %}
+  <div class="tag-comment">{{ tag.comment }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+
+</body>
+</html>
