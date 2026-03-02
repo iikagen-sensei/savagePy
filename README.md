@@ -24,7 +24,7 @@ savagePy/
 │   ├── ui/                         # Interfaz web (lo que ve el usuario en el navegador)
 │   │   ├── base.html               # Layout base: navbar, estilos globales de la UI
 │   │   ├── index.html              # Página principal: listado de documentos
-│   │   ├── glosario.html           # Glosario de traducciones (abre en nueva pestaña)
+│   │   ├── glossary.html           # Glosario de traducciones (abre en nueva pestaña)
 │   │   ├── characters.html         # Listado de personajes
 │   │   ├── character_form.html     # Formulario para crear/editar personajes
 │   │   ├── bestiary.html           # Listado de criaturas
@@ -161,7 +161,7 @@ Flask recibe la petición
 | `GET /characters` | Listado de personajes (filtrado por view_id de config) |
 | `GET /bestiary` | Listado de criaturas (filtrado por view_id de config) |
 | `GET /rules` | Listado de reglas modulares |
-| `GET /glosario` | Glosario de traducciones (abre en nueva pestaña) |
+| `GET /glossary` | Glosario de traducciones (abre en nueva pestaña) |
 
 Todos admiten `?view_id=<id>` para filtrar por vista.
 

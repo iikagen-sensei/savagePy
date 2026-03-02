@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4;
+      margin: 22mm 24mm 22mm 24mm;
+      margin: 20mm 12mm 20mm 12mm;
+      @top-right {
+        content: "{% if view_name %}Equipo - {{ view_name }}{% else %}Equipo{% endif %}";
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 7.5pt;
+        color: #aaa;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      @bottom-center {
+        content: counter(page);
+        font-family: 'EB Garamond', serif;
+        font-size: 8pt;
+        color: #aaa;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'EB Garamond', serif;
+      font-size: 10.5pt;
+      color: #1a1a1a;
+      background: #fff;
+    }
+
+
+
+    .type-section { margin-bottom: 8mm; }
+
+    .type-title {
+      font-family: 'Cinzel', serif;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #1a1a1a;
+      background: none;
+      padding: 1.5mm 0;
+      margin-bottom: 0;
+      letter-spacing: 0.06em;
+      border-bottom: 2.5pt solid #1a1a1a;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5pt;
+    }
+    thead th {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 7pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+      padding: 1.5mm 2mm;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+    thead th.num { text-align: right; }
+    tbody tr { border-bottom: 0.5pt solid #e0e0e0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 1.5mm 2mm; line-height: 1.3; vertical-align: top; }
+    tbody td.num { text-align: right; color: #555; }
+    tbody td.muted { color: #666; font-style: italic; }
+
+    .item-name { font-weight: 500; }
+    .item-original { font-size: 8.5pt; color: #888; font-style: italic; }
+    .item-notes { font-size: 8.5pt; color: #666; font-style: italic; }
+    .source-tag {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 6.5pt;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+
+{% set types = equipment | map(attribute='type') | unique | reject('none') | list | sort %}
+
+{% for type in types %}
+{% set items = equipment | selectattr('type', 'equalto', type) | list %}
+<div class="type-section">
+  <div class="type-title">{{ type }}</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:25%">Nombre</th>
+        <th style="width:30%">Rasgos</th>
+        <th class="num" style="width:12%">Coste</th>
+        <th class="num" style="width:10%">Peso</th>
+        <th style="width:13%">Fuente</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>
+          <span class="item-name">{{ item.name }}</span>
+          {% if item.name_original %}<br><span class="item-original">{{ item.name_original }}</span>{% endif %}
+        </td>
+        <td class="muted">
+          {{ item.traits or '—' }}
+          {% if item.notes %}<br><span class="item-notes">{{ item.notes }}</span>{% endif %}
+        </td>
+        <td class="num">{{ item.cost or '—' }}</td>
+        <td class="num">{{ item.weight or '—' }}</td>
+        <td>
+          {% if item.source == 'Oficial' and item.reference_book %}
+            <span class="source-tag">{{ item.reference_book.title }}</span>{% if item.page_no %}<br><span class="source-tag">p.{{ item.page_no }}</span>{% endif %}
+          {% elif item.source == 'Terceros' %}
+            <span class="source-tag">Terceros</span>
+          {% else %}
+            <span class="source-tag">Propio</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+</body>
+</html>

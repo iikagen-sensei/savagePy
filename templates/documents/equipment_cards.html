@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @page { size: A4 portrait; margin: 8mm; }
+
+    body {
+      font-family: 'Crimson Pro', Georgia, serif;
+      background: white;
+      width: 194mm;
+    }
+
+    .page {
+      display: table;
+      width: 194mm;
+      border-collapse: collapse;
+      page-break-after: always;
+    }
+    .page:last-child { page-break-after: auto; }
+    .row { display: table-row; }
+    .cell {
+      display: table-cell;
+      width: 62mm;
+      height: 89mm;
+      padding: 2mm;
+      vertical-align: top;
+    }
+    .cell-empty { display: table-cell; width: 62mm; }
+
+    .card {
+      width: 58mm;
+      height: 85mm;
+      border-radius: 3mm;
+      border: 0.5mm solid #bbb;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #fafafa;
+    }
+
+    /* Color por tipo */
+    .card.arma-de-mele    { border-color: #7a1c1c; background: #fdf5f5; }
+    .card.arma-de-distancia { border-color: #5a3e1b; background: #fdf8f0; }
+    .card.armadura        { border-color: #1a3a5c; background: #f0f5fd; }
+    .card.escudo          { border-color: #2c5f2d; background: #f0faf0; }
+
+    .card-header {
+      height: 7mm;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3mm;
+      flex-shrink: 0;
+      background: #1a1a1a;
+    }
+    .card.arma-de-mele     .card-header { background: #7a1c1c; }
+    .card.arma-de-distancia .card-header { background: #5a3e1b; }
+    .card.armadura         .card-header { background: #1a3a5c; }
+    .card.escudo           .card-header { background: #2c5f2d; }
+
+    .card-type {
+      font-family: 'Cinzel', serif;
+      font-size: 5pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.9);
+    }
+    .card-source {
+      font-size: 5pt;
+      font-style: italic;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .card-name {
+      font-family: 'Cinzel', serif;
+      font-size: 8pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #1a1a1a;
+      padding: 2.5mm 3mm 1mm;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .card-original {
+      font-size: 6.5pt;
+      color: #999;
+      font-style: italic;
+      text-align: center;
+      padding: 0 3mm 1.5mm;
+      border-bottom: 0.3mm solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+
+    .card-body {
+      flex: 1;
+      padding: 2mm 3mm;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5mm;
+    }
+    .card-traits {
+      font-size: 9pt;
+      font-weight: 600;
+      color: #222;
+      text-align: center;
+    }
+    .card-stats {
+      display: flex;
+      justify-content: center;
+      gap: 4mm;
+      margin-top: auto;
+      padding-top: 1.5mm;
+      border-top: 0.3mm solid rgba(0,0,0,0.1);
+    }
+    .card-stat {
+      text-align: center;
+      font-size: 7pt;
+    }
+    .card-stat-val {
+      font-family: 'Cinzel', serif;
+      font-size: 8pt;
+      font-weight: 700;
+      color: #333;
+      display: block;
+    }
+    .card-stat-lbl {
+      font-size: 5.5pt;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .card-notes {
+      font-size: 7pt;
+      color: #777;
+      font-style: italic;
+      line-height: 1.4;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+{% set items = equipment | selectattr('name') | list %}
+{% set per_page = 9 %}
+{% set per_row  = 3 %}
+
+{% for page_start in range(0, items|length, per_page) %}
+{% set page_items = items[page_start : page_start + per_page] %}
+<div class="page">
+  {% for row_start in range(0, per_page, per_row) %}
+  <div class="row">
+    {% for i in range(per_row) %}
+    {% set idx = row_start + i %}
+    {% if idx < page_items|length %}
+    {% set item = page_items[idx] %}
+    {% set type_class = (item.type or '') | lower
+        | replace('á','a') | replace('é','e') | replace('í','i')
+        | replace('ó','o') | replace('ú','u')
+        | replace(' ', '-') %}
+    <div class="cell">
+      <div class="card {{ type_class }}">
+
+        <div class="card-header">
+          <span class="card-type">{{ item.type or 'Equipo' }}</span>
+          <span class="card-source">
+            {% if item.source == 'Oficial' and item.reference_book %}{{ item.reference_book.title }}{% else %}{{ item.source or '' }}{% endif %}
+          </span>
+        </div>
+
+        <div class="card-name">{{ item.name }}</div>
+        {% if item.name_original %}
+        <div class="card-original">{{ item.name_original }}</div>
+        {% endif %}
+
+        <div class="card-body">
+          {% if item.traits %}
+          <div class="card-traits">{{ item.traits }}</div>
+          {% endif %}
+
+          {% if item.notes %}
+          <div class="card-notes">{{ item.notes }}</div>
+          {% endif %}
+
+          <div class="card-stats">
+            {% if item.cost %}
+            <div class="card-stat">
+              <span class="card-stat-val">{{ item.cost }}</span>
+              <span class="card-stat-lbl">Coste</span>
+            </div>
+            {% endif %}
+            {% if item.weight %}
+            <div class="card-stat">
+              <span class="card-stat-val">{{ item.weight }}</span>
+              <span class="card-stat-lbl">Peso</span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+    {% else %}
+    <div class="cell-empty"></div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+</body>
+</html>

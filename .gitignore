@@ -7,6 +7,6 @@ venv/
 __pycache__/
 *.pyc
 
-# Outputs generados
+static/fonts/cache/
 output/
 !.env.example

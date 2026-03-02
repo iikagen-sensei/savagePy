@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ficha · {{ character.name }}</title>
+  <title>Ficha · {{ characters[0].data.name if characters else 'Personajes' }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -47,7 +47,7 @@
       padding: 1.2rem 1.4rem;
       display: flex;
       flex-direction: column;
-      gap: 0.6rem;
+      gap: 0.3rem;
     }
 
     .char-name-row {
@@ -95,8 +95,8 @@
       font-size: 0.82rem;
       line-height: 1.55;
       color: #3a2a14;
-      margin-top: 0.8rem;
-      padding-top: 0.8rem;
+      margin-top: 0.3rem;
+      padding-top: 0.3rem;
       border-top: 1px solid rgba(139,105,20,0.25);
       text-align: justify;
     }
@@ -252,12 +252,16 @@
       align-items: flex-end;
       justify-content: center;
       padding: 0.8rem;
+      overflow: hidden;
+      height: 510px;
     }
 
     .advances-image {
-      width: 330px;
-      object-fit: cover;
-      object-position: top center;
+      max-width: 314px;
+      max-height: 494px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       box-shadow: 2px 2px 8px var(--shadow);
     }
 
@@ -329,7 +333,7 @@
     }
 
     @media print {
-      body { background: white !important; padding: 0; }
+      body { background: white !important; padding: 0 !important; }
       .sheet {
         box-shadow: none;
         border: none;
@@ -356,6 +360,8 @@
       .special-section,
       .special-rank-block,
       .page-break { background: white !important; }
+      .header-data { gap: 0.15rem !important; }
+      .char-description { margin-top: 0.15rem !important; padding-top: 0.15rem !important; }
       .section-label {
         background: var(--crimson) !important;
         -webkit-print-color-adjust: exact;
@@ -369,6 +375,9 @@
   </style>
 </head>
 <body>
+{% for item in characters %}
+{% set character = item.data %}
+{% set image_url = item.image_url %}
 <div class="sheet">
 
   {# ── PÁGINA 1 ── #}
@@ -547,5 +556,6 @@
   </div>
 
 </div>
+{% endfor %}
 </body>
 </html>

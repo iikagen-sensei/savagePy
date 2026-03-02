@@ -191,13 +191,13 @@
         </div>
         <div class="field-row cols-1">
           <div class="field">
-            <label>Ancestría</label>
+            <label>Linaje</label>
             <select id="ancestrySelect" onchange="onAncestryChange()">
-              <option value="">— Elige ancestría —</option>
+              <option value="">— Elige linaje —</option>
             </select>
           </div>
           <div class="field">
-            <label>Rasgos de ancestría</label>
+            <label>Rasgos de linaje</label>
             <input type="text" id="ancestryTraits" readonly style="color:var(--text-dim);cursor:default">
           </div>
         </div>
@@ -291,7 +291,7 @@ function loadExisting() {
     if (el && attrs[a]) el.value = attrs[a];
   });
 
-  // Ancestría
+  // Linaje
   if (c.ancestry) {
     const sel = document.getElementById('ancestrySelect');
     // Buscar por nombre
@@ -377,7 +377,7 @@ function buildSkillsGrid() {
   }).join('');
 }
 
-// ── Ancestría ───────────────────────────────────────────────────
+// ── Linaje ──────────────────────────────────────────────────────
 function populateAncestries() {
   const sel = document.getElementById('ancestrySelect');
   DB.ancestries.forEach(a => {

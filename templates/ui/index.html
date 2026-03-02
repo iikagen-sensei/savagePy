@@ -10,35 +10,64 @@
   </div>
 </div>
 
-<div class="stats-strip">
-  {% for table_key, table in documents.items() %}
-  <button class="stat-item {% if loop.first %}active{% endif %}"
-          id="tab-{{ table_key }}"
-          onclick="switchTab('{{ table_key }}')">
-    <span class="stat-n loading" id="count-{{ table_key }}">···</span>
-    <span class="stat-l">{{ table.label }}</span>
-  </button>
+{# Agrupar por category dinámicamente #}
+{% set categories = {} %}
+{% for group_key, group in documents.items() %}
+  {% set cat = group.category | default('sistema') %}
+  {% if cat not in categories %}
+    {% set _ = categories.update({cat: []}) %}
+  {% endif %}
+  {% set _ = categories[cat].append((group_key, group)) %}
+{% endfor %}
+
+{# Determinar la primera categoría y el primer grupo global #}
+{% set first_cat = categories.keys() | list | first %}
+{% set first_group = categories[first_cat][0][0] %}
+
+<div class="stats-strip has-toggle">
+  {% for cat, groups in categories.items() %}
+  <div class="cat-tabs {% if loop.first %}active{% endif %}" id="cat-tabs-{{ cat }}">
+    {% for group_key, group in groups %}
+    <button class="stat-item {% if group_key == first_group %}active{% endif %}"
+            id="tab-{{ group_key }}"
+            onclick="switchTab('{{ group_key }}')">
+      <span class="stat-n loading" id="count-{{ group_key }}">···</span>
+      <span class="stat-l">{{ group.label }}</span>
+    </button>
+    {% endfor %}
+  </div>
   {% endfor %}
+
+  <div class="category-toggle" id="category-toggle">
+    {% for cat in categories.keys() %}
+    <button class="cat-btn {% if loop.first %}active{% endif %}"
+            id="cat-btn-{{ cat }}"
+            onclick="switchCategory('{{ cat }}')">
+      {{ 'Sistema' if cat == 'sistema' else 'Ambientación' }}
+    </button>
+    {% endfor %}
+  </div>
 </div>
 
 <main class="sw-main">
-  {% for table_key, table in documents.items() %}
-  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ table_key }}">
+  {% for group_key, group in documents.items() %}
+  <div class="doc-section {% if group_key == first_group %}active{% endif %}" id="panel-{{ group_key }}">
     <div class="section-head">
-      <img class="section-img" src="{{ url_for('static', filename=table.image) }}" alt="{{ table.label }}">
-      <span class="section-name">{{ table.label }}</span>
-      <span class="section-desc">{{ table.description }}</span>
+      <img class="section-img" src="{{ url_for('static', filename=group.image) }}" alt="{{ group.label }}">
+      <span class="section-name">{{ group.label }}</span>
+      <span class="section-desc">{{ group.description }}</span>
     </div>
     <div class="view-row">
       <span class="view-label">Vista</span>
-      <span class="view-loading" id="view-loading-{{ table_key }}">Cargando...</span>
-      <select class="view-select" id="view-{{ table_key }}" style="display:none">
+      <span class="view-loading" id="view-loading-{{ group_key }}">Cargando...</span>
+      <select class="view-select" id="view-{{ group_key }}" style="display:none">
         <option value="">— Todas las vistas —</option>
       </select>
-      <span class="view-error" id="view-error-{{ table_key }}" style="display:none">Error al cargar vistas</span>
+      <span class="view-error" id="view-error-{{ group_key }}" style="display:none">Error al cargar vistas</span>
     </div>
     <div class="docs-list">
-      {% for doc in table.docs %}
+      {% for doc_key, doc in group.docs.items() %}
+      {% set doc_id = group_key + '.' + doc_key %}
       {% set ext = doc.template.split('.')[-1] %}
       <div class="doc-row">
         <div class="doc-icon-wrap">
@@ -49,14 +78,14 @@
           <div class="doc-desc">{{ doc.description }}</div>
         </div>
         <div class="doc-actions">
-          {% if table_key == 'character' %}
-            <button class="btn btn-outline" onclick="openCharacters('preview','{{ table_key }}')">Ver</button>
-            <button class="btn btn-red"     onclick="openCharacters('pdf','{{ table_key }}')">↓ PDF</button>
+          {% if group_key == 'character' %}
+            <button class="btn btn-outline" onclick="openCharacters('preview','{{ group_key }}')">Ver</button>
+            <button class="btn btn-red"     onclick="openCharacters('pdf','{{ group_key }}')">↓ PDF</button>
           {% elif ext == 'html' %}
-            <button class="btn btn-outline" onclick="openDoc('preview','{{ doc.id }}','{{ table_key }}')">Ver</button>
-            <button class="btn btn-red"     onclick="openDoc('pdf','{{ doc.id }}','{{ table_key }}')">↓ PDF</button>
+            <button class="btn btn-outline" onclick="openDoc('preview','{{ doc_id }}','{{ group_key }}')">Ver</button>
+            <button class="btn btn-red"     onclick="openDoc('pdf','{{ doc_id }}','{{ group_key }}')">↓ PDF</button>
           {% elif ext == 'docx' or ext == 'md' %}
-            <button class="btn btn-red"     onclick="openDoc('docx','{{ doc.id }}','{{ table_key }}')">↓ Word</button>
+            <button class="btn btn-red"     onclick="openDoc('docx','{{ doc_id }}','{{ group_key }}')">↓ Word</button>
           {% endif %}
         </div>
       </div>
@@ -66,57 +95,117 @@
   {% endfor %}
 </main>
 
-<div id="app-data" data-view-tables='{{ documents.keys() | list | tojson }}' style="display:none"></div>
+<div id="app-data"
+     data-groups='{{ documents.keys() | list | tojson }}'
+     data-categories='{{ categories.keys() | list | tojson }}'
+     data-cat-groups='{{ categories | tojson }}'
+     style="display:none"></div>
 <div class="overlay" id="overlay"><div class="spinner"></div><div class="overlay-text" id="overlayTxt">Generando...</div></div>
 <div class="toast" id="toast"></div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  function switchTab(key){
-    document.querySelectorAll('.stat-item').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.doc-section').forEach(p=>p.classList.remove('active'));
-    document.getElementById('tab-'+key).classList.add('active');
-    document.getElementById('panel-'+key).classList.add('active');
+  // Datos del servidor
+  const appData     = document.getElementById('app-data');
+  const GROUPS      = JSON.parse(appData.dataset.groups);
+  const CATEGORIES  = JSON.parse(appData.dataset.categories);
+  // cat -> [['group_key', {...}], ...]  — solo necesitamos las claves
+  const CAT_GROUPS  = JSON.parse(appData.dataset.catGroups);
+
+  let activeCategory = CATEGORIES[0];
+  let activeTab      = CAT_GROUPS[activeCategory][0][0];
+
+  function switchCategory(cat) {
+    if (cat === activeCategory) return;
+    activeCategory = cat;
+
+    // Toggle buttons
+    CATEGORIES.forEach(c => {
+      document.getElementById('cat-btn-' + c).classList.toggle('active', c === cat);
+      document.getElementById('cat-tabs-' + c).classList.toggle('active', c === cat);
+    });
+
+    // Activar primer tab de la nueva categoría
+    switchTab(CAT_GROUPS[cat][0][0]);
   }
-  function showOverlay(txt){document.getElementById('overlayTxt').textContent=txt||'Generando...';document.getElementById('overlay').classList.add('active');}
-  function hideOverlay(){document.getElementById('overlay').classList.remove('active');}
-  function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show';setTimeout(()=>el.className='toast',3000);}
-  function openDoc(action,docId,tableKey){
-    const viewId=document.getElementById('view-'+tableKey)?.value||'';
-    const params=viewId?'?view_id='+encodeURIComponent(viewId):'';
-    if(action==='preview'){showOverlay('Generando previsualización...');window.open('/preview/'+docId+params,'_blank');setTimeout(hideOverlay,4000);}
-    else{const msg=action==='pdf'?'Generando PDF...':action==='docx'?'Generando Word...':'Generando HTML...';showOverlay(msg);window.location.href='/download/'+docId+'/'+action+params;setTimeout(hideOverlay,6000);}
+
+  function switchTab(key) {
+    activeTab = key;
+    document.querySelectorAll('.stat-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.doc-section').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + key).classList.add('active');
+    document.getElementById('panel-' + key).classList.add('active');
   }
-  function openCharacters(action,tableKey){
-    const viewId=document.getElementById('view-'+tableKey)?.value||'';
-    const params=viewId?'?view_id='+encodeURIComponent(viewId):'';
-    if(action==='preview'){showOverlay('Generando previsualización...');window.open('/preview/characters'+params,'_blank');setTimeout(hideOverlay,6000);}
-    else{showOverlay('Generando PDF...');window.location.href='/download/characters/pdf'+params;setTimeout(hideOverlay,6000);}
+
+  function showOverlay(txt) {
+    document.getElementById('overlayTxt').textContent = txt || 'Generando...';
+    document.getElementById('overlay').classList.add('active');
   }
-  async function loadViews(tableKey){
-    const loading=document.getElementById('view-loading-'+tableKey);
-    const select=document.getElementById('view-'+tableKey);
-    const errEl=document.getElementById('view-error-'+tableKey);
-    try{
-      const res=await fetch('/api/views/'+tableKey);
-      if(!res.ok)throw new Error();
-      const views=await res.json();
-      views.forEach(v=>{const o=document.createElement('option');o.value=v.id;o.textContent=v.title;select.appendChild(o);});
-      loading.style.display='none';select.style.display='';
-    }catch{loading.style.display='none';errEl.style.display='';}
+  function hideOverlay() { document.getElementById('overlay').classList.remove('active'); }
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = 'toast show';
+    setTimeout(() => el.className = 'toast', 3000);
   }
-  async function loadCounts(){
-    try{
-      const res=await fetch('/api/status');const data=await res.json();
-      for(const[key,val]of Object.entries(data)){
-        const el=document.getElementById('count-'+key);
-        if(el){el.classList.remove('loading');el.textContent=val??'—';}
+
+  function openDoc(action, docId, groupKey) {
+    const viewId = document.getElementById('view-' + groupKey)?.value || '';
+    const params = viewId ? '?view_id=' + encodeURIComponent(viewId) : '';
+    const msgs = { preview: 'Generando previsualización...', pdf: 'Generando PDF...', docx: 'Generando Word...' };
+    showOverlay(msgs[action]);
+    if (action === 'preview') {
+      window.open('/preview/' + docId + params, '_blank');
+      setTimeout(hideOverlay, 4000);
+    } else {
+      window.location.href = '/download/' + docId + '/' + action + params;
+      setTimeout(hideOverlay, 6000);
+    }
+  }
+
+  function openCharacters(action, groupKey) {
+    const viewId = document.getElementById('view-' + groupKey)?.value || '';
+    const params = viewId ? '?view_id=' + encodeURIComponent(viewId) : '';
+    showOverlay(action === 'preview' ? 'Generando previsualización...' : 'Generando PDF...');
+    if (action === 'preview') {
+      window.open('/preview/characters' + params, '_blank');
+      setTimeout(hideOverlay, 6000);
+    } else {
+      window.location.href = '/download/characters/pdf' + params;
+      setTimeout(hideOverlay, 6000);
+    }
+  }
+
+  async function loadViews(groupKey) {
+    const loading = document.getElementById('view-loading-' + groupKey);
+    const select  = document.getElementById('view-' + groupKey);
+    const errEl   = document.getElementById('view-error-' + groupKey);
+    try {
+      const res = await fetch('/api/views/' + groupKey);
+      if (!res.ok) throw new Error();
+      const views = await res.json();
+      views.forEach(v => {
+        const o = document.createElement('option');
+        o.value = v.id; o.textContent = v.title;
+        select.appendChild(o);
+      });
+      loading.style.display = 'none'; select.style.display = '';
+    } catch {
+      loading.style.display = 'none'; errEl.style.display = '';
+    }
+  }
+
+  async function loadCounts() {
+    try {
+      const data = await fetch('/api/status').then(r => r.json());
+      for (const [key, val] of Object.entries(data)) {
+        const el = document.getElementById('count-' + key);
+        if (el) { el.classList.remove('loading'); el.textContent = val ?? '—'; }
       }
-    }catch{}
+    } catch {}
   }
-  const VIEW_TABLE_KEYS=JSON.parse(document.getElementById('app-data').dataset.viewTables);
+
   loadCounts();
-  VIEW_TABLE_KEYS.forEach(key=>loadViews(key));
+  GROUPS.forEach(key => loadViews(key));
 </script>
 {% endblock %}

@@ -12,15 +12,24 @@
 
 <main class="sw-main">
   <div class="list-head">
-    <span class="list-head-title">{{ characters|length }} personaje{{ 's' if characters|length != 1 }}</span>
-    <a href="/characters/new" class="btn btn-solid">+ Nuevo personaje</a>
+    <span class="list-head-title" id="char-count">
+      {{ characters|length }} personaje{{ 's' if characters|length != 1 }}
+      <span class="list-head-found" id="char-found" style="display:none"></span>
+    </span>
+    <div class="list-head-right">
+      <input class="list-search" id="char-search" type="search"
+             placeholder="Buscar por nombre o concepto…" autocomplete="off">
+      <a href="/characters/new" class="btn btn-solid">+ Nuevo personaje</a>
+    </div>
   </div>
 
   {% if characters %}
-  <div class="chars-grid">
+  <div class="chars-grid" id="chars-grid">
     {% for char in characters %}
     {% set cid = char.id|default(char.Id) %}
-    <div class="char-card">
+    <div class="char-card"
+         data-name="{{ char.name | lower }}"
+         data-concept="{{ (char.data.concept if char.data and char.data.concept else '') | lower }}">
       <div class="char-card-img">
         {% if char.image_url %}
           <img src="{{ char.image_url }}" alt="{{ char.name }}">
@@ -41,6 +50,12 @@
     </div>
     {% endfor %}
   </div>
+
+  <div id="no-results" style="display:none; text-align:center; padding:3rem 2rem; color:var(--muted);">
+    <div style="font-size:2rem; margin-bottom:0.5rem; opacity:0.3;">🔍</div>
+    <div style="font-style:italic;">Sin resultados para "<span id="no-results-query"></span>"</div>
+  </div>
+
   {% else %}
   <div style="text-align:center; padding:4rem 2rem; color:var(--muted);">
     <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🧙</div>
@@ -73,6 +88,17 @@
     document.getElementById('modalBg').classList.add('active');
   }
   function closeModal() { document.getElementById('modalBg').classList.remove('active'); }
-  document.getElementById('modalBg').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+  document.getElementById('modalBg').addEventListener('click', e => { if(e.target===this) closeModal(); });
+
+  initSearch({
+    inputId: 'char-search',
+    cards: document.querySelectorAll('.char-card'),
+    countId: 'char-found',
+    noResultsId: 'no-results',
+    noResultsQueryId: 'no-results-query',
+    total: {{ characters|length }},
+    noun: 'personaje',
+    fields: ['name', 'concept'],
+  });
 </script>
 {% endblock %}

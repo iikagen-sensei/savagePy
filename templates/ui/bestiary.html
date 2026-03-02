@@ -12,16 +12,26 @@
 
 <main class="sw-main">
   <div class="list-head">
-    <span class="list-head-title">{{ creatures|length }} criatura{{ 's' if creatures|length != 1 }}</span>
-    <a href="/bestiary/new" class="btn btn-solid">+ Nueva criatura</a>
+    <span class="list-head-title" id="beast-count">
+      {{ creatures|length }} criatura{{ 's' if creatures|length != 1 }}
+      <span class="list-head-found" id="beast-found" style="display:none"></span>
+    </span>
+    <div class="list-head-right">
+      <input class="list-search" id="beast-search" type="search"
+             placeholder="Buscar por nombre, tipo o concepto…" autocomplete="off">
+      <a href="/bestiary/new" class="btn btn-solid">+ Nueva criatura</a>
+    </div>
   </div>
 
   {% if creatures %}
-  <div class="chars-grid">
+  <div class="chars-grid" id="beasts-grid">
     {% for creature in creatures %}
     {% set cid = creature.id|default(creature.Id) %}
     {% set is_wc = creature.wild_card or (creature.data and creature.data.wild_card) %}
-    <div class="char-card{% if is_wc %} wildcard{% endif %}">
+    <div class="char-card{% if is_wc %} wildcard{% endif %}"
+         data-name="{{ creature.name | lower }}"
+         data-concept="{{ (creature.data.concept if creature.data and creature.data.concept else '') | lower }}"
+         data-type="{{ (creature.data.type if creature.data and creature.data.type else creature.type or '') | lower }}">
       <div class="char-card-img">
         {% if creature.image_url %}
           <img src="{{ creature.image_url }}" alt="{{ creature.name }}">
@@ -47,6 +57,12 @@
     </div>
     {% endfor %}
   </div>
+
+  <div id="no-results" style="display:none; text-align:center; padding:3rem 2rem; color:var(--muted);">
+    <div style="font-size:2rem; margin-bottom:0.5rem; opacity:0.3;">🔍</div>
+    <div style="font-style:italic;">Sin resultados para "<span id="no-results-query"></span>"</div>
+  </div>
+
   {% else %}
   <div style="text-align:center; padding:4rem 2rem; color:var(--muted);">
     <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🐉</div>
@@ -79,6 +95,17 @@
     document.getElementById('modalBg').classList.add('active');
   }
   function closeModal() { document.getElementById('modalBg').classList.remove('active'); }
-  document.getElementById('modalBg').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
+  document.getElementById('modalBg').addEventListener('click', e => { if(e.target===this) closeModal(); });
+
+  initSearch({
+    inputId: 'beast-search',
+    cards: document.querySelectorAll('.char-card'),
+    countId: 'beast-found',
+    noResultsId: 'no-results',
+    noResultsQueryId: 'no-results-query',
+    total: {{ creatures|length }},
+    noun: 'criatura',
+    fields: ['name', 'concept', 'type'],
+  });
 </script>
 {% endblock %}

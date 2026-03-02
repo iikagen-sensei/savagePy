@@ -1,76 +1,24 @@
 # app.py
+# Interfaz web Flask. Solo rutas — la lógica de generación está en generate.py.
+
 from flask import Flask, render_template, jsonify, send_file, Response, request, redirect, url_for
 from pathlib import Path
 import io
 import json
 import requests as req
 from config import NOCODB_URL, API_TOKEN, TABLE_CONFIG, DOCUMENTS
-from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry, get_rules, get_rule, get_reference_books
-from jinja2 import Environment, FileSystemLoader
-import markdown as _markdown_lib
+from nocodb_client import get_table, get_characters, get_character, get_bestiary_entries, get_bestiary_entry, _get_record
+from generate import find_doc, doc_type, render_html, render_pdf, render_docx, resolve_view_name, output_filename
+from utils import check_environment
+
+check_environment()
 
 app = Flask(__name__)
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
-DOCUMENTS_DIR = TEMPLATES_DIR / "documents"
 
 
-def _find_doc(doc_id: str):
-    """Busca un documento en DOCUMENTS por su id. Devuelve (doc, table_key) o (None, None)."""
-    for t_key, t_cfg in DOCUMENTS.items():
-        for doc in t_cfg["docs"]:
-            if doc["id"] == doc_id:
-                return doc, t_key
-    return None, None
-
-
-def _doc_type(doc: dict) -> str:
-    """Devuelve 'html', 'docx' o 'md' según la extensión del template."""
-    return Path(doc["template"]).suffix.lstrip(".")
-
-
-def _make_jinja_env() -> Environment:
-    env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
-    env.filters["markdown"] = lambda text: _markdown_lib.markdown(text or "", extensions=["tables", "nl2br"])
-    return env
-
-
-def _resolve_view_name(table_key: str, view_id: str | None) -> str:
-    if not view_id:
-        return ""
-    try:
-        table_id = TABLE_CONFIG[table_key]["table_id"]
-        headers = {"xc-token": API_TOKEN}
-        url = f"{NOCODB_URL}/api/v2/meta/tables/{table_id}/views"
-        r = req.get(url, headers=headers, timeout=5)
-        r.raise_for_status()
-        for v in r.json().get("list", []):
-            if v["id"] == view_id:
-                return v["title"].removeprefix("pub:").strip()
-    except Exception:
-        pass
-    return ""
-
-
-def _get_data(table_key: str, view_id: str | None):
-    if table_key == "bestiary":
-        return get_bestiary_entries(view_id=view_id, full=True)
-    return get_table(table_key, view_id=view_id)
-
-
-def render_document(doc_id: str, view_id: str | None = None) -> str:
-    """Renderiza un documento HTML y devuelve el string."""
-    doc, table_key = _find_doc(doc_id)
-    if not doc:
-        raise ValueError(f"Documento '{doc_id}' no encontrado")
-    data = _get_data(table_key, view_id)
-    view_name = _resolve_view_name(table_key, view_id)
-    env = _make_jinja_env()
-    template = env.get_template(doc["template"])
-    return template.render(**{doc["data_key"]: data}, view_name=view_name, nocodb_url=NOCODB_URL)
-
-
-# ── RUTAS ──────────────────────────────────────────────────────────────────
+# ── DOCUMENTOS ─────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
@@ -83,8 +31,8 @@ def status():
     counts = {}
     for key, cfg in TABLE_CONFIG.items():
         try:
-            url = f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records?limit=1"
-            r = req.get(url, headers=headers, timeout=5)
+            r = req.get(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records?limit=1",
+                        headers=headers, timeout=5)
             r.raise_for_status()
             counts[key] = r.json()["pageInfo"]["totalRows"]
         except Exception:
@@ -96,11 +44,9 @@ def status():
 def get_views(table_key: str):
     if table_key not in TABLE_CONFIG:
         return jsonify({"error": "Tabla no encontrada"}), 404
-    table_id = TABLE_CONFIG[table_key]["table_id"]
-    headers = {"xc-token": API_TOKEN}
     try:
-        url = f"{NOCODB_URL}/api/v2/meta/tables/{table_id}/views"
-        r = req.get(url, headers=headers, timeout=5)
+        r = req.get(f"{NOCODB_URL}/api/v2/meta/tables/{TABLE_CONFIG[table_key]['table_id']}/views",
+                    headers={"xc-token": API_TOKEN}, timeout=5)
         r.raise_for_status()
         PREFIX = "pub:"
         views = [
@@ -113,76 +59,59 @@ def get_views(table_key: str):
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/preview/<doc_id>")
+@app.route("/preview/<path:doc_id>")
 def preview(doc_id: str):
     view_id = request.args.get("view_id") or None
     try:
-        html = render_document(doc_id, view_id=view_id)
+        return Response(render_html(doc_id, view_id=view_id), mimetype="text/html")
     except ValueError:
         return "Documento no encontrado", 404
-    return Response(html, mimetype="text/html")
 
 
-@app.route("/download/<doc_id>/html")
+@app.route("/download/<path:doc_id>/html")
 def download_html(doc_id: str):
     view_id = request.args.get("view_id") or None
     try:
-        html = render_document(doc_id, view_id=view_id)
+        html = render_html(doc_id, view_id=view_id)
     except ValueError:
         return "Documento no encontrado", 404
     return Response(html, mimetype="text/html",
                     headers={"Content-Disposition": f"attachment; filename={doc_id}.html"})
 
 
-@app.route("/download/<doc_id>/pdf")
+@app.route("/download/<path:doc_id>/pdf")
 def download_pdf(doc_id: str):
     view_id = request.args.get("view_id") or None
-    doc, table_key = _find_doc(doc_id)
+    doc, table_key = find_doc(doc_id)
     if not doc:
         return "Documento no encontrado", 404
-    if _doc_type(doc) != "html":
+    if doc_type(doc) != "html":
         return "Este documento no tiene formato PDF", 400
     try:
-        from weasyprint import HTML
-    except ImportError:
-        return "WeasyPrint no instalado", 500
-    try:
-        html = render_document(doc_id, view_id=view_id)
-    except ValueError:
-        return "Documento no encontrado", 404
-    pdf_bytes = HTML(string=html, base_url=str(TEMPLATES_DIR)).write_pdf()
-    view_name = _resolve_view_name(table_key, view_id)
-    filename = f"{doc_id}{'_' + view_name if view_name else ''}.pdf"
+        pdf_bytes = render_pdf(doc_id, view_id=view_id)
+    except Exception as e:
+        return f"Error al generar PDF: {e}", 500
+    view_name = resolve_view_name(table_key, view_id)
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
-                     as_attachment=True, download_name=filename)
+                     as_attachment=True, download_name=output_filename(doc_id, "pdf", view_name))
 
 
-@app.route("/download/<doc_id>/docx")
+@app.route("/download/<path:doc_id>/docx")
 def download_docx(doc_id: str):
-    from docx_generator import render_docx_template, render_md_template
     view_id = request.args.get("view_id") or None
-    doc, table_key = _find_doc(doc_id)
+    doc, table_key = find_doc(doc_id)
     if not doc:
         return "Documento no encontrado", 404
-
-    dtype = _doc_type(doc)
-    if dtype not in ("docx", "md"):
+    if doc_type(doc) not in ("docx", "md"):
         return "Este documento no tiene formato Word", 400
-
-    data = _get_data(table_key, view_id)
-    view_name = _resolve_view_name(table_key, view_id)
-    template_path = DOCUMENTS_DIR / Path(doc["template"]).name
-    context = {doc["data_key"]: data, "view_name": view_name, "titulo": doc["label"]}
-    filename = f"{doc_id}{'_' + view_name if view_name else ''}.docx"
-
-    if dtype == "md":
-        docx_bytes = render_md_template(template_path, context)
-    else:
-        docx_bytes = render_docx_template(template_path, context)
-
+    try:
+        docx_bytes = render_docx(doc_id, view_id=view_id)
+    except Exception as e:
+        return f"Error al generar Word: {e}", 500
+    view_name = resolve_view_name(table_key, view_id)
     return send_file(io.BytesIO(docx_bytes),
                      mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                     as_attachment=True, download_name=filename)
+                     as_attachment=True, download_name=output_filename(doc_id, "docx", view_name))
 
 
 # ── PERSONAJES ────────────────────────────────────────────────────────────
@@ -191,46 +120,26 @@ def download_docx(doc_id: str):
 def preview_characters():
     view_id = request.args.get("view_id") or None
     try:
-        char_list = get_characters(view_id=view_id)
+        return Response(render_html("character.character_sheet", view_id=view_id), mimetype="text/html")
+    except ValueError as e:
+        return str(e), 404
     except Exception as e:
         return f"Error al cargar personajes: {e}", 500
-    env = _make_jinja_env()
-    template = env.get_template("documents/character_sheet.html")
-    pages = []
-    for record in char_list:
-        result = get_character(record["Id"])
-        if not result["character"]:
-            continue
-        pages.append(template.render(character=result["character"], image_url=result["image_url"]))
-    if not pages:
-        return "No hay personajes con datos en esta vista", 404
-    return Response("\n".join(pages), mimetype="text/html")
 
 
 @app.route("/download/characters/pdf")
 def download_characters_pdf():
     view_id = request.args.get("view_id") or None
+    doc, table_key = find_doc("character.character_sheet")
     try:
-        from weasyprint import HTML as WeasyprintHTML
-    except ImportError:
-        return "WeasyPrint no instalado", 500
-    try:
-        char_list = get_characters(view_id=view_id)
+        pdf_bytes = render_pdf("character.character_sheet", view_id=view_id)
+    except ValueError as e:
+        return str(e), 404
     except Exception as e:
-        return f"Error al cargar personajes: {e}", 500
-    env = _make_jinja_env()
-    template = env.get_template("documents/character_sheet.html")
-    pages = []
-    for record in char_list:
-        result = get_character(record["Id"])
-        if not result["character"]:
-            continue
-        pages.append(template.render(character=result["character"], image_url=result["image_url"]))
-    if not pages:
-        return "No hay personajes con datos en esta vista", 404
-    pdf_bytes = WeasyprintHTML(string="\n".join(pages), base_url=str(TEMPLATES_DIR)).write_pdf()
+        return f"Error al generar PDF: {e}", 500
+    view_name = resolve_view_name(table_key, view_id)
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
-                     as_attachment=True, download_name="personajes.pdf")
+                     as_attachment=True, download_name=output_filename("character.character_sheet", "pdf", view_name))
 
 
 # ── GESTIÓN DE PERSONAJES ─────────────────────────────────────────────────
@@ -292,9 +201,9 @@ def character_save():
 @app.route("/characters/<int:record_id>/delete", methods=["POST"])
 def character_delete(record_id: int):
     cfg = TABLE_CONFIG["character"]
-    headers = {"xc-token": API_TOKEN}
     try:
-        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records", headers=headers, json={"Id": record_id})
+        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                       headers={"xc-token": API_TOKEN}, json={"Id": record_id})
         r.raise_for_status()
     except Exception as e:
         return f"Error al eliminar: {e}", 500
@@ -376,9 +285,9 @@ def bestiary_save():
 @app.route("/bestiary/<int:record_id>/delete", methods=["POST"])
 def bestiary_delete(record_id: int):
     cfg = TABLE_CONFIG["bestiary"]
-    headers = {"xc-token": API_TOKEN}
     try:
-        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records", headers=headers, json={"Id": record_id})
+        r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
+                       headers={"xc-token": API_TOKEN}, json={"Id": record_id})
         r.raise_for_status()
     except Exception as e:
         return f"Error al eliminar: {e}", 500
@@ -398,20 +307,20 @@ def form_data_bestiary():
         return jsonify({"error": str(e)}), 500
 
 
+# ── GESTIÓN DE REGLAS ─────────────────────────────────────────────────────
+
 @app.route("/api/form-data/rules")
 def form_data_rules():
     try:
-        return jsonify({"books": get_reference_books()})
+        return jsonify({"books": get_table("reference_book")})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# ── GESTIÓN DE REGLAS ─────────────────────────────────────────────────────
-
 @app.route("/rules")
 def rules_list():
     try:
-        rules = get_rules()
+        rules = get_table("rule")
     except Exception:
         rules = []
     return render_template("ui/rules.html", rules=rules)
@@ -425,7 +334,7 @@ def rule_new():
 @app.route("/rules/<int:record_id>/edit")
 def rule_edit(record_id: int):
     try:
-        rule = get_rule(record_id)
+        rule = _get_record("rule", record_id)
     except Exception as e:
         return f"Error al cargar regla: {e}", 500
     return render_template("ui/rule_form.html", record_id=record_id, rule=rule)
@@ -465,10 +374,9 @@ def rule_save():
 @app.route("/rules/<int:record_id>/delete", methods=["POST"])
 def rule_delete(record_id: int):
     cfg = TABLE_CONFIG["rule"]
-    headers = {"xc-token": API_TOKEN}
     try:
         r = req.delete(f"{NOCODB_URL}/api/v2/tables/{cfg['table_id']}/records",
-                       headers=headers, json={"Id": record_id})
+                       headers={"xc-token": API_TOKEN}, json={"Id": record_id})
         r.raise_for_status()
     except Exception as e:
         return f"Error al eliminar: {e}", 500
@@ -477,22 +385,17 @@ def rule_delete(record_id: int):
 
 # ── GLOSARIO ───────────────────────────────────────────────────────────────
 
-@app.route("/glosario")
-def glosario():
-    tabs = [
-        ("power",     "Poderes"),
-        ("edge",      "Ventajas"),
-        ("hindrance", "Desventajas"),
-        ("skill",     "Habilidades"),
-    ]
-    data = {}
-    for key, _ in tabs:
-        records = get_table(key)
-        data[key] = [
-            {"name": r.get("name") or "", "name_original": r.get("name_original")}
-            for r in records if r.get("name")
-        ]
-    return render_template("ui/glosario.html", tabs=tabs, data=data)
+@app.route("/glossary")
+def glossary():
+    tabs = [(key, config['label']) for key, config in TABLE_CONFIG.items() if config.get("glossary") is True
+            ]
+    # tabs = [("power", "Poderes"), ("edge", "Ventajas"), ("hindrance", "Desventajas"), ("skill", "Habilidades")]
+    data = {
+        key: [{"name": r.get("name") or "", "name_original": r.get("name_original")}
+              for r in get_table(key) if r.get("name") and r.get("name_original")]
+        for key, _ in tabs
+    }
+    return render_template("ui/glossary.html", tabs=tabs, data=data)
 
 
 if __name__ == "__main__":

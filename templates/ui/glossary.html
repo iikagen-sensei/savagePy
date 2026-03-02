@@ -10,25 +10,25 @@
   </div>
 </div>
 
-<div class="stats-strip">
+<div class="stats-strip" id="glossary-strip">
   {% for key, label in tabs %}
   <button class="stat-item {% if loop.first %}active{% endif %}"
-          id="tab-{{ key }}"
-          onclick="switchTab('{{ key }}')">
+          id="gtab-{{ key }}"
+          onclick="switchGlossaryTab('{{ key }}')">
     <span class="stat-n">{{ data[key]|length }}</span>
     <span class="stat-l">{{ label }}</span>
   </button>
   {% endfor %}
 </div>
 
-<main class="sw-main">
+<main class="sw-main" id="glossary-main">
   {% for key, label in tabs %}
-  <div class="doc-section {% if loop.first %}active{% endif %}" id="panel-{{ key }}" style="border-bottom:none;">
+  <div class="doc-section {% if loop.first %}active{% endif %}" id="gpanel-{{ key }}" style="border-bottom:none;">
     <div class="section-head">
       <span class="section-name">{{ label }}</span>
-      <input class="glosario-search" type="search" placeholder="Buscar..." oninput="filterTable('{{ key }}', this.value)">
+      <input class="glossary-search" type="search" placeholder="Buscar..." oninput="filterTable('{{ key }}', this.value)">
     </div>
-    <table class="glosario-table">
+    <table class="glossary-table">
       <thead>
         <tr>
           <th onclick="sortTable('{{ key }}', 0)" class="sortable">Español <span class="sort-icon">↕</span></th>
@@ -51,6 +51,11 @@
 
 {% block scripts %}
 <script>
+(function () {
+  // IDs propios del glosario: gtab-* y gpanel-*
+  // Nunca usa clases genéricas (.stat-item, .doc-section) para no
+  // interferir con los elementos del index cuando se carga como modal.
+
   function filterTable(key, query) {
     const q = query.trim().toLowerCase();
     document.querySelectorAll(`#tbody-${key} tr`).forEach(row => {
@@ -59,11 +64,11 @@
     });
   }
 
-  function switchTab(key) {
-    document.querySelectorAll('.stat-item').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.doc-section').forEach(p => p.classList.remove('active'));
-    document.getElementById('tab-' + key).classList.add('active');
-    document.getElementById('panel-' + key).classList.add('active');
+  function switchGlossaryTab(key) {
+    document.querySelectorAll('[id^="gtab-"]').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('[id^="gpanel-"]').forEach(p => p.classList.remove('active'));
+    document.getElementById('gtab-' + key).classList.add('active');
+    document.getElementById('gpanel-' + key).classList.add('active');
   }
 
   const sortState = {};
@@ -81,12 +86,16 @@
       return asc ? A.localeCompare(B, 'es') : B.localeCompare(A, 'es');
     });
 
-    // Actualizar iconos
-    document.querySelectorAll(`#panel-${key} .sort-icon`).forEach((el, i) => {
+    document.querySelectorAll(`#gpanel-${key} .sort-icon`).forEach((el, i) => {
       el.textContent = i === col ? (asc ? '↑' : '↓') : '↕';
     });
 
     rows.forEach(r => tbody.appendChild(r));
   }
+
+  window.filterTable       = filterTable;
+  window.switchGlossaryTab = switchGlossaryTab;
+  window.sortTable         = sortTable;
+})();
 </script>
 {% endblock %}
